@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:Arial,sans-serif;fill:#111827}.grid{stroke:#d1d5db;stroke-width:1}.axis{stroke:#111827;stroke-width:1.5}.small{font-size:12px}.label{font-size:14px}.title{font-size:20px;font-weight:700}</style>
+<text x="450.0" y="30" text-anchor="middle" class="title">Corpus compressibility (lower is more compressible)</text>
+<text x="18" y="235.0" transform="rotate(-90 18 235.0)" text-anchor="middle" class="label">Archive / input size (%)</text>
+<line x1="80" y1="410.0" x2="870" y2="410.0" class="grid"/>
+<text x="72" y="414.0" text-anchor="end" class="small">0</text>
+<line x1="80" y1="340.0" x2="870" y2="340.0" class="grid"/>
+<text x="72" y="344.0" text-anchor="end" class="small">21</text>
+<line x1="80" y1="270.0" x2="870" y2="270.0" class="grid"/>
+<text x="72" y="274.0" text-anchor="end" class="small">42</text>
+<line x1="80" y1="200.0" x2="870" y2="200.0" class="grid"/>
+<text x="72" y="204.0" text-anchor="end" class="small">63</text>
+<line x1="80" y1="130.0" x2="870" y2="130.0" class="grid"/>
+<text x="72" y="134.0" text-anchor="end" class="small">84</text>
+<line x1="80" y1="60.0" x2="870" y2="60.0" class="grid"/>
+<text x="72" y="64.0" text-anchor="end" class="small">105</text>
+<line x1="80" y1="410" x2="870" y2="410" class="axis"/>
+<rect x="145.8" y="409.0" width="131.7" height="1.0" fill="#2563eb"/>
+<text x="211.7" y="402.0" text-anchor="middle" class="label">0.29%</text>
+<text x="211.7" y="440" text-anchor="middle" class="label">Compressible JSONL</text>
+<rect x="409.2" y="241.6" width="131.7" height="168.4" fill="#2563eb"/>
+<text x="475.0" y="234.6" text-anchor="middle" class="label">50.52%</text>
+<text x="475.0" y="440" text-anchor="middle" class="label">50/50 mixed</text>
+<rect x="672.5" y="76.6" width="131.7" height="333.4" fill="#2563eb"/>
+<text x="738.3" y="72.0" text-anchor="middle" class="label">100.01%</text>
+<text x="738.3" y="440" text-anchor="middle" class="label">Incompressible</text>
+</svg>
