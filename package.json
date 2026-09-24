@@ -2,5 +2,18 @@
   "name": "7z-js-benchmark",
   "version": "0.1.0-issue.1.1",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "benchmark": "node src/benchmark.mjs"
+  },
+  "dependencies": {
+    "7z-wasm": "1.2.0",
+    "7zip-bin-full": "26.3.1",
+    "js7z-tools": "2.5.0",
+    "sevenzip-wasm": "26.3.0"
+  },
+  "overrides": {
+    "readline-sync": "1.4.10"
+  }
 }
