@@ -1,0 +1,150 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-24T19:54:55.418Z",
+    "workflowRunId": "36051325746",
+    "gitSha": "81edfd8b3a11dbd363b14a2d26f48e5bdea49db5",
+    "node": "v22.23.2",
+    "platform": "linux x64",
+    "release": "6.17.0-1022-azure",
+    "cpuModel": "AMD EPYC 7763 64-Core Processor",
+    "logicalCpus": 4,
+    "totalMemoryBytes": 16766414848,
+    "settings": {
+      "format": "7z",
+      "method": "LZMA2",
+      "level": 5,
+      "dictionary": "32 MiB",
+      "solid": true,
+      "repetitions": 3,
+      "warmupRuns": 1
+    }
+  },
+  "corpora": [
+    {
+      "corpus": {
+        "kind": "jsonl",
+        "label": "Highly compressible JSONL",
+        "generator": "fixed-size conversation-style JSONL records",
+        "requestedBytes": 33554432,
+        "actualBytes": 33554432,
+        "files": 1,
+        "treeSha256": "b5e05958a532b931bee4576e7cf499e82f88b7e7ace1fd321811d7bf17609371",
+        "ratioExpected": [
+          0,
+          0.1
+        ]
+      },
+      "summary": [
+        {
+          "id": "native-7zip-26.03",
+          "threadMode": "single",
+          "medianMs": 1331.5827670000003,
+          "minMs": 1329.948325,
+          "maxMs": 1333.1804169999996,
+          "throughputMiBPerSec": 24.031551618901354,
+          "archiveBytes": 97953,
+          "ratio": 0.002919226884841919,
+          "medianInitMs": 0
+        },
+        {
+          "id": "sevenzip-wasm-26.3.0",
+          "threadMode": "single",
+          "medianMs": 1464.459395,
+          "minMs": 1458.6263119999999,
+          "maxMs": 1549.1259849999997,
+          "throughputMiBPerSec": 21.851066754909922,
+          "archiveBytes": 97953,
+          "ratio": 0.002919226884841919,
+          "medianInitMs": 11.533828999999969
+        },
+        {
+          "id": "js7z-tools-2.5.0",
+          "threadMode": "single",
+          "medianMs": 1574.169402,
+          "minMs": 1565.0860999999995,
+          "maxMs": 1575.344366,
+          "throughputMiBPerSec": 20.32818066425611,
+          "archiveBytes": 97953,
+          "ratio": 0.002919226884841919,
+          "medianInitMs": 9.822368000000097
+        },
+        {
+          "id": "7z-wasm-1.2.0",
+          "threadMode": "single",
+          "medianMs": 1393.128112,
+          "minMs": 1387.5740919999998,
+          "maxMs": 1396.401436,
+          "throughputMiBPerSec": 22.969890367125114,
+          "archiveBytes": 97953,
+          "ratio": 0.002919226884841919,
+          "medianInitMs": 11.544930000000022
+        },
+        {
+          "id": "native-7zip-26.03",
+          "threadMode": "auto",
+          "medianMs": 432.01847500000076,
+          "minMs": 428.36531000000105,
+          "maxMs": 433.94724900000074,
+          "throughputMiBPerSec": 74.07090634260477,
+          "archiveBytes": 97953,
+          "ratio": 0.002919226884841919,
+          "medianInitMs": 0
+        },
+        {
+          "id": "sevenzip-wasm-26.3.0",
+          "threadMode": "auto",
+          "medianMs": 1467.6325180000003,
+          "minMs": 1464.1586199999997,
+          "maxMs": 1469.4870939999996,
+          "throughputMiBPerSec": 21.803823237446142,
+          "archiveBytes": 97953,
+          "ratio": 0.002919226884841919,
+          "medianInitMs": 10.874829000000318
+        },
+        {
+          "id": "js7z-tools-2.5.0",
+          "threadMode": "auto",
+          "medianMs": 611.037779,
+          "minMs": 602.9916169999999,
+          "maxMs": 624.7831030000002,
+          "throughputMiBPerSec": 52.36992064937445,
+          "archiveBytes": 97953,
+          "ratio": 0.002919226884841919,
+          "medianInitMs": 12.605117000000064
+        },
+        {
+          "id": "7z-wasm-1.2.0",
+          "threadMode": "auto",
+          "medianMs": 1403.8063849999999,
+          "medianInitMs": 8.598414000000048
+        }
+      ]
+    },
+    {
+      "corpus": {
+        "kind": "moderate",
+        "label": "Moderately compressible 50/50 mixed data",
+        "generator": "alternating 64 KiB repetitive and AES-256-CTR high-entropy blocks",
+        "requestedBytes": 33554432,
+        "actualBytes": 33554432,
+        "files": 1,
+        "treeSha256": "40c9d83ec56a126b89dac68b80edfd351bcc48d51a6a366fa9640bbd0473233f",
+        "ratioExpected": [0.4, 0.6]
+      },
+      "summary": [
+        {"id":"native-7zip-26.03","threadMode":"single","medianMs":4172.388351000001,"minMs":4111.41721,"maxMs":4274.350198,"throughputMiBPerSec":7.669468253675505,"archiveBytes":16952702,"ratio":0.5052298903465271,"medianInitMs":0},
+        {"id":"sevenzip-wasm-26.3.0","threadMode":"single","medianMs":4896.2946489999995,"minMs":4834.977479,"maxMs":4926.810713000001,"throughputMiBPerSec":6.535554392449718,"archiveBytes":16952702,"ratio":0.5052298903465271,"medianInitMs":9.861879000000044},
+        {"id":"js7z-tools-2.5.0","threadMode":"single","medianMs":5095.470201000002,"minMs":4995.647391999999,"maxMs":5135.916209000001,"throughputMiBPerSec":6.280087752003711,"archiveBytes":16952702,"ratio":0.5052298903465271,"medianInitMs":9.946377000000211},
+        {"id":"7z-wasm-1.2.0","threadMode":"single","medianMs":4859.543938999999,"minMs":4791.152457,"maxMs":4867.134970000001,"throughputMiBPerSec":6.584980072550797,"archiveBytes":16952702,"ratio":0.5052298903465271,"medianInitMs":7.8311610000000655},
+        {"id":"native-7zip-26.03","threadMode":"auto","medianMs":1092.0509230000025,"minMs":1033.9828759999946,"maxMs":1149.327019999997,"throughputMiBPerSec":29.30266283928586,"archiveBytes":16952702,"ratio":0.5052298903465271,"medianInitMs":0},
+        {"id":"sevenzip-wasm-26.3.0","threadMode":"auto","medianMs":4852.489257000001,"minMs":4849.571504,"maxMs":4947.683544000001,"throughputMiBPerSec":6.594553497225804,"archiveBytes":16952702,"ratio":0.5052298903465271,"medianInitMs":9.715610000000197},
+        {"id":"js7z-tools-2.5.0","threadMode":"auto","medianMs":2062.6792830000004,"minMs":1969.970945,"maxMs":2088.059073,"throughputMiBPerSec":15.513802976417441,"archiveBytes":16952702,"ratio":0.5052298903465271,"medianInitMs":11.110397999999805},
+        {"id":"7z-wasm-1.2.0","threadMode":"auto","medianMs":4936.091318,"minMs":4806.180855999999,"maxMs":4955.852389999998,"throughputMiBPerSec":6.48286223622089,"archiveBytes":16952702,"ratio":0.5052298903465271,"medianInitMs":10.764127000000371}
+      ]
+    },
+    {
+      "corpus": {"kind":"incompressible","label":"Incompressible high-entropy data","generator":"deterministic AES-256-CTR high-entropy bytes","requestedBytes":33554432,"actualBytes":33554432,"files":1,"treeSha256":"905f53cfc004326eecaf6fd035045b47e382f53e63fa1861367c9890ec2c2fd3","ratioExpected":[0.99,1.02]},
+      "summary":[{"id":"native-7zip-26.03","threadMode":"single","medianMs":9033.111924000026,"minMs":8808.619682999997,"maxMs":9088.138529000018,"throughputMiBPerSec":3.542522252489684,"archiveBytes":33556722,"ratio":1.0000682473182678,"medianInitMs":0},{"id":"sevenzip-wasm-26.3.0","threadMode":"single","medianMs":10303.16416,"minMs":10279.287970000001,"maxMs":10446.306827999999,"throughputMiBPerSec":3.105842001841889,"archiveBytes":33556722,"ratio":1.0000682473182678,"medianInitMs":9.755009000000427},{"id":"js7z-tools-2.5.0","threadMode":"single","medianMs":10610.258392,"minMs":10515.515275999998,"maxMs":10674.097869999998,"throughputMiBPerSec":3.01594917086351,"archiveBytes":33556722,"ratio":1.0000682473182678,"medianInitMs":11.907783999999083},{"id":"7z-wasm-1.2.0","threadMode":"single","medianMs":10439.198057,"minMs":10200.390178000001,"maxMs":10443.196541000001,"throughputMiBPerSec":3.065369564335683,"archiveBytes":33556722,"ratio":1.0000682473182678,"medianInitMs":11.863249999998516},{"id":"native-7zip-26.03","threadMode":"auto","medianMs":2087.602229000011,"minMs":2068.090919999988,"maxMs":2089.668194000027,"throughputMiBPerSec":15.328590645991225,"archiveBytes":33556722,"ratio":1.0000682473182678,"medianInitMs":0},{"id":"sevenzip-wasm-26.3.0","threadMode":"auto","medianMs":10029.990387999998,"minMs":9978.744871000003,"maxMs":10194.463335999997,"throughputMiBPerSec":3.190431771329032,"archiveBytes":33556722,"ratio":1.0000682473182678,"medianInitMs":9.748308999998699},{"id":"js7z-tools-2.5.0","threadMode":"auto","medianMs":3594.0708759999998,"minMs":3569.30563,"maxMs":3596.5548049999998,"throughputMiBPerSec":8.903552852473018,"archiveBytes":33556722,"ratio":1.0000682473182678,"medianInitMs":12.438458999999057},{"id":"7z-wasm-1.2.0","threadMode":"auto","medianMs":9809.213940999998,"minMs":9693.950109000001,"maxMs":9811.159627000001,"throughputMiBPerSec":3.262238971692544,"archiveBytes":33556722,"ratio":1.0000682473182678,"medianInitMs":10.439160999998421}]
+    }
+  ]
+}

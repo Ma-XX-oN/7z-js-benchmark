@@ -155,7 +155,7 @@ The native executable remains materially faster. The gap changes with compressib
 
 ## Reproduction and raw data
 
-Raw controlled-run `results.json` and `summary.md` are retained in the workflow artifact `7z-js-controlled-benchmark-results` for run `36051325746`.
+The exact controlled-run `results.json` snapshot is committed at `benchmark-results/control-run-results.json` so the measurements backing this report and its graphs remain durable in the repository. The original workflow artifact `7z-js-controlled-benchmark-results` for run `36051325746` also contains `results.json` and `summary.md`.
 
 Repository issue #1 (https://github.com/Ma-XX-oN/7z-js-benchmark/issues/1)  
 Pull request #2 (https://github.com/Ma-XX-oN/7z-js-benchmark/pull/2)  
