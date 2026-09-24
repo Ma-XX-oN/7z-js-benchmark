@@ -41,6 +41,45 @@ export function generateJsonlCorpus(root, targetBytes = 32 * 1024 * 1024) {
   };
 }
 
+export function generateIncompressibleCorpus(root, targetBytes = 32 * 1024 * 1024) {
+  assert(Number.isInteger(targetBytes) && targetBytes > 0);
+  fs.rmSync(root, { recursive: true, force: true });
+  fs.mkdirSync(root, { recursive: true });
+
+  const file = path.join(root, 'high-entropy.bin');
+  const key = crypto.createHash('sha256')
+    .update('7z-js-benchmark-incompressible-v1:key')
+    .digest();
+  const iv = crypto.createHash('sha256')
+    .update('7z-js-benchmark-incompressible-v1:iv')
+    .digest()
+    .subarray(0, 16);
+  const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
+  const fd = fs.openSync(file, 'w');
+  const zeroChunk = Buffer.alloc(1024 * 1024);
+  let written = 0;
+
+  try {
+    while (written < targetBytes) {
+      const count = Math.min(zeroChunk.length, targetBytes - written);
+      const encrypted = cipher.update(zeroChunk.subarray(0, count));
+      assert.equal(encrypted.length, count);
+      fs.writeSync(fd, encrypted);
+      written += encrypted.length;
+    }
+    assert.equal(cipher.final().length, 0);
+  } finally {
+    fs.closeSync(fd);
+  }
+
+  assert.equal(fs.statSync(file).size, targetBytes);
+  return {
+    bytes: targetBytes,
+    files: 1,
+    sha256: hashFile(file)
+  };
+}
+
 export function hashFile(file) {
   return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }

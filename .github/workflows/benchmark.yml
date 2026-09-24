@@ -23,7 +23,9 @@ jobs:
       - name: Unit tests
         run: npm test
 
-      - name: Run compression benchmark
+      - name: Run worst-case compression benchmark
+        env:
+          BENCH_CORPUS_KIND: incompressible
         run: npm run benchmark
 
       - name: Add benchmark summary
