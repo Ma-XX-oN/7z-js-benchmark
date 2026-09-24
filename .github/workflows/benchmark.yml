@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - issue-1-compression-benchmark
+    paths-ignore:
+      - REPORT.md
+      - graphs/**
+      - benchmark-results/control-run-results.json
   workflow_dispatch:
 
 jobs:
@@ -23,9 +27,9 @@ jobs:
       - name: Unit tests
         run: npm test
 
-      - name: Run worst-case compression benchmark
+      - name: Run controlled three-corpus benchmark
         env:
-          BENCH_CORPUS_KIND: incompressible
+          BENCH_CORPUS_KIND: all
         run: npm run benchmark
 
       - name: Add benchmark summary
@@ -39,6 +43,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: 7z-js-benchmark-results
+          name: 7z-js-controlled-benchmark-results
           path: benchmark-results/
           if-no-files-found: warn
