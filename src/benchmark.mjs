@@ -6,7 +6,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { createRequire } from 'node:module';
-import { generateJsonlCorpus, hashTree } from './corpus.mjs';
+import {
+  generateIncompressibleCorpus,
+  generateJsonlCorpus,
+  hashTree
+} from './corpus.mjs';
 
 const require = createRequire(import.meta.url);
 const native7z = require('7zip-bin-full').path7z;
@@ -16,9 +20,11 @@ const workRoot = path.join(repoRoot, '.benchmark-work');
 const resultRoot = path.join(repoRoot, 'benchmark-results');
 const repetitions = Number(process.env.BENCH_REPETITIONS || 3);
 const corpusBytes = Number(process.env.BENCH_CORPUS_BYTES || 32 * 1024 * 1024);
+const corpusKind = process.env.BENCH_CORPUS_KIND || 'jsonl';
 
 assert(Number.isInteger(repetitions) && repetitions > 0);
 assert(Number.isInteger(corpusBytes) && corpusBytes > 0);
+assert(['jsonl', 'incompressible'].includes(corpusKind));
 assert(fs.existsSync(native7z));
 
 fs.rmSync(workRoot, { recursive: true, force: true });
@@ -27,9 +33,11 @@ fs.mkdirSync(path.join(workRoot, 'corpora'), { recursive: true });
 fs.mkdirSync(path.join(workRoot, 'out'), { recursive: true });
 fs.mkdirSync(resultRoot, { recursive: true });
 
-const corpusRel = 'corpora/jsonl';
+const corpusRel = `corpora/${corpusKind}`;
 const corpusRoot = path.join(workRoot, corpusRel);
-const corpus = generateJsonlCorpus(corpusRoot, corpusBytes);
+const corpus = corpusKind === 'jsonl'
+  ? generateJsonlCorpus(corpusRoot, corpusBytes)
+  : generateIncompressibleCorpus(corpusRoot, corpusBytes);
 const sourceTreeHash = hashTree(corpusRoot);
 const implementations = [
   { id: 'native-7zip-26.03', kind: 'native' },
@@ -60,6 +68,12 @@ for (const threadMode of threadModes) {
 }
 
 const summary = rawResults.map((entry) => summarize(entry, corpus.bytes));
+if (corpusKind === 'incompressible') {
+  assert(
+    summary.every((row) => row.ratio >= 0.99),
+    'incompressible corpus unexpectedly compressed below 99% of input size'
+  );
+}
 const metadata = {
   timestamp: new Date().toISOString(),
   node: process.version,
@@ -69,7 +83,10 @@ const metadata = {
   logicalCpus: os.cpus().length,
   totalMemoryBytes: os.totalmem(),
   corpus: {
-    kind: 'jsonl',
+    kind: corpusKind,
+    generator: corpusKind === 'jsonl'
+      ? 'deterministic conversation-style JSONL'
+      : 'deterministic AES-256-CTR high-entropy bytes',
     requestedBytes: corpusBytes,
     actualBytes: corpus.bytes,
     files: corpus.files,
@@ -213,7 +230,7 @@ function renderMarkdown(metadata, summaryRows) {
     `- CPU: ${metadata.cpuModel}`,
     `- Logical CPUs: ${metadata.logicalCpus}`,
     `- Node: ${metadata.node}`,
-    `- Corpus: ${(metadata.corpus.actualBytes / 1024 / 1024).toFixed(2)} MiB deterministic JSONL`,
+    `- Corpus: ${(metadata.corpus.actualBytes / 1024 / 1024).toFixed(2)} MiB ${metadata.corpus.generator}`,
     '- Settings: 7z / LZMA2 / mx=5 / 32 MiB dictionary / solid',
     `- Measured repetitions: ${metadata.settings.repetitions} after 1 warm-up`,
     '',
