@@ -1,0 +1,42 @@
+name: Compression benchmark
+
+on:
+  push:
+    branches:
+      - issue-1-compression-benchmark
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install exact benchmark dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Run compression benchmark
+        run: npm run benchmark
+
+      - name: Add benchmark summary
+        if: always()
+        run: |
+          if [ -f benchmark-results/summary.md ]; then
+            cat benchmark-results/summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload raw benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 7z-js-benchmark-results
+          path: benchmark-results/
+          if-no-files-found: warn
