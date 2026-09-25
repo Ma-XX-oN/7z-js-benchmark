@@ -41,7 +41,11 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Build direct libarchive WASM module
-        run: bash prototype/libarchive-streaming/build.sh
+        shell: bash
+        run: |
+          set -o pipefail
+          bash prototype/libarchive-streaming/build.sh 2>&1 \
+            | tee prototype/libarchive-streaming/build.log
 
       - name: Verify streaming decompress to continuous compress
         run: node prototype/libarchive-streaming/verify.mjs
@@ -49,10 +53,12 @@ jobs:
       - name: Re-run repository tests after build
         run: npm test
 
-      - name: Upload streaming result
+      - name: Upload streaming diagnostics and result
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: streaming-7z-wasm-results
-          path: benchmark-results/streaming-wasm-results.json
+          path: |
+            prototype/libarchive-streaming/build.log
+            benchmark-results/streaming-wasm-results.json
           if-no-files-found: warn
