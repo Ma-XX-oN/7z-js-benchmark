@@ -16,6 +16,8 @@ test('streaming 7z prototype is a library API, not a CLI wrapper', async () => {
   assert.match(source, /stream7z_writer_begin\s*\(/);
   assert.match(source, /stream7z_writer_write\s*\(/);
   assert.match(source, /stream7z_reader_read\s*\(/);
+  assert.match(source, /stream7z_pipe_reader_to_writer\s*\(/);
+  assert.match(source, /stream7z_writer_append_source\s*\(/);
   assert.doesNotMatch(source, /callMain\s*\(/);
   assert.doesNotMatch(source, /\bsystem\s*\(/);
   assert.doesNotMatch(source, /\bexec[lvpe]*\s*\(/);
@@ -34,10 +36,21 @@ test('streaming build pins secure upstream versions and cross-compiles dependenc
   );
 });
 
-test('verification compares streamed output with an independent byte oracle', async () => {
+test('verification does not depend on an unexported Emscripten heap view', async () => {
+  const harness = await readPrototypeFile('verify.mjs');
+  const source = await readPrototypeFile('stream7z.c');
+
+  assert.doesNotMatch(harness, /module\.HEAPU8/);
+  assert.match(source, /HEAPU8\.subarray\s*\(/);
+  assert.match(source, /emscripten_get_heap_size\s*\(/);
+});
+
+test('verification compares streamed output with stock 7z and an independent byte oracle', async () => {
   const harness = await readPrototypeFile('verify.mjs');
 
   assert.match(harness, /createHash\(['"]sha256['"]\)/);
   assert.match(harness, /native.*7z|7z.*native/i);
+  assert.match(harness, /runNative\(\['t'/);
+  assert.match(harness, /runNative\(\['x'/);
   assert.match(harness, /expected.*concaten/i);
 });
