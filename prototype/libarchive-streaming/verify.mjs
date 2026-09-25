@@ -13,6 +13,7 @@ const repoRoot = path.resolve(here, '../..');
 const workRoot = path.join(repoRoot, '.streaming-work');
 const resultRoot = path.join(repoRoot, 'benchmark-results');
 const buildModule = path.join(here, 'build', 'stream7z.mjs');
+const js7zReferenceRunner = path.join(here, 'js7z-reference.cjs');
 const patternBytes = Number(process.env.STREAM7Z_PATTERN_BYTES || 1024 * 1024);
 const archivedSegments = Number(process.env.STREAM7Z_SEGMENTS || 3);
 
@@ -20,6 +21,7 @@ assert(Number.isInteger(patternBytes) && patternBytes > 0);
 assert(Number.isInteger(archivedSegments) && archivedSegments >= 2);
 assert(fs.existsSync(native7z), `native 7z oracle missing: ${native7z}`);
 assert(fs.existsSync(buildModule), `WASM module missing: ${buildModule}`);
+assert(fs.existsSync(js7zReferenceRunner), `JS7z reference runner missing: ${js7zReferenceRunner}`);
 
 fs.rmSync(workRoot, { recursive: true, force: true });
 fs.mkdirSync(workRoot, { recursive: true });
@@ -192,26 +194,15 @@ try {
 }
 
 assert(fs.statSync(outputArchive).size > 0);
-runNative(['t', '-bd', '-bso0', '-bse0', outputArchive]);
-const listing = runNative(['l', '-slt', '-bd', outputArchive]);
-assert(
-  listing.stdout.includes(`Path = ${outputMember}`),
-  `stock 7z listing did not contain expected member ${outputMember}`,
-);
-assert(
-  listing.stdout.includes(`Size = ${expectedRawBytes}`),
-  `stock 7z listing did not contain expected size ${expectedRawBytes}`,
-);
-assert.match(listing.stdout, /Method = LZMA2/);
+const streamedCompatibility = validateStock7zArchive({
+  archivePath: outputArchive,
+  memberName: outputMember,
+  expectedBytes: expectedRawBytes,
+  expectedHash: expectedConcatenationHash,
+  extractRoot: path.join(workRoot, 'extract-streamed'),
+});
 
-const extractRoot = path.join(workRoot, 'extract');
-fs.mkdirSync(extractRoot, { recursive: true });
-runNative(['x', '-bd', '-bso0', '-bse0', '-y', `-o${extractRoot}`, outputArchive]);
-const extractedPath = path.join(extractRoot, outputMember);
-assert.equal(fs.statSync(extractedPath).size, expectedRawBytes);
-assert.equal(hashFile(extractedPath), expectedConcatenationHash);
-
-// This raw file exists only as an independent native-7z oracle after the
+// This raw file exists only as an independent native/JS7z oracle after the
 // streaming path has already completed. The streaming path itself never makes
 // a reconstructed raw intermediate.
 const baselineRaw = path.join(workRoot, 'expected-concatenation.jsonl');
@@ -230,8 +221,24 @@ runNative([
 ]);
 runNative(['t', '-bd', '-bso0', '-bse0', baselineArchive]);
 
+const js7zReferenceArchive = path.join(workRoot, 'js7z-reference.7z');
+runNode([
+  js7zReferenceRunner,
+  workRoot,
+  path.basename(baselineRaw),
+  path.basename(js7zReferenceArchive),
+]);
+const js7zCompatibility = validateStock7zArchive({
+  archivePath: js7zReferenceArchive,
+  memberName: path.basename(baselineRaw),
+  expectedBytes: expectedRawBytes,
+  expectedHash: expectedConcatenationHash,
+  extractRoot: path.join(workRoot, 'extract-js7z'),
+});
+
 const streamedArchiveBytes = fs.statSync(outputArchive).size;
 const nativeBaselineBytes = fs.statSync(baselineArchive).size;
+const js7zReferenceBytes = fs.statSync(js7zReferenceArchive).size;
 const streamedRatio = streamedArchiveBytes / expectedRawBytes;
 
 // Every chunk is mostly the same incompressible-looking block but begins with
@@ -258,15 +265,21 @@ const result = {
   sourceBytesPerSegment: commonPattern.length,
   expectedRawBytes,
   expectedConcatenationSha256: expectedConcatenationHash,
-  extractedSha256: hashFile(extractedPath),
+  extractedSha256: streamedCompatibility.extractedSha256,
   streamedArchiveBytes,
   nativeSingleInputArchiveBytes: nativeBaselineBytes,
+  js7zReferenceArchiveBytes: js7zReferenceBytes,
   streamedToRawRatio: streamedRatio,
   streamedToNativeSizeRatio: streamedArchiveBytes / nativeBaselineBytes,
+  streamedToJs7zSizeRatio: streamedArchiveBytes / js7zReferenceBytes,
   peakWasmHeapBytes,
-  stock7zTestPassed: true,
-  stock7zListPassed: true,
-  stock7zExtractPassed: true,
+  stock7zTestPassed: streamedCompatibility.testPassed,
+  stock7zListPassed: streamedCompatibility.listPassed,
+  stock7zExtractPassed: streamedCompatibility.extractPassed,
+  js7zStock7zTestPassed: js7zCompatibility.testPassed,
+  js7zStock7zListPassed: js7zCompatibility.listPassed,
+  js7zStock7zExtractPassed: js7zCompatibility.extractPassed,
+  js7zExtractedSha256: js7zCompatibility.extractedSha256,
   orderSensitiveFixture: true,
   rawIntermediateCreatedByStreamingPath: false,
   note: 'libarchive 7z writer internally stages compressed bytes before final archive output',
@@ -307,6 +320,40 @@ function hashFile(filePath) {
   return createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
 }
 
+function validateStock7zArchive({
+  archivePath,
+  memberName,
+  expectedBytes,
+  expectedHash,
+  extractRoot,
+}) {
+  runNative(['t', '-bd', '-bso0', '-bse0', archivePath]);
+  const listing = runNative(['l', '-slt', '-bd', archivePath]);
+  assert(
+    listing.stdout.includes(`Path = ${memberName}`),
+    `stock 7z listing did not contain expected member ${memberName}`,
+  );
+  assert(
+    listing.stdout.includes(`Size = ${expectedBytes}`),
+    `stock 7z listing did not contain expected size ${expectedBytes}`,
+  );
+  assert.match(listing.stdout, /Method = LZMA2/);
+
+  fs.rmSync(extractRoot, { recursive: true, force: true });
+  fs.mkdirSync(extractRoot, { recursive: true });
+  runNative(['x', '-bd', '-bso0', '-bse0', '-y', `-o${extractRoot}`, archivePath]);
+  const extractedPath = path.join(extractRoot, memberName);
+  assert.equal(fs.statSync(extractedPath).size, expectedBytes);
+  const extractedSha256 = hashFile(extractedPath);
+  assert.equal(extractedSha256, expectedHash);
+  return {
+    testPassed: true,
+    listPassed: true,
+    extractPassed: true,
+    extractedSha256,
+  };
+}
+
 function runNative(args) {
   const result = childProcess.spawnSync(native7z, args, {
     cwd: workRoot,
@@ -318,6 +365,21 @@ function runNative(args) {
     result.status,
     0,
     `native 7z failed: ${args.join(' ')}\n${result.stderr}\n${result.stdout}`,
+  );
+  return result;
+}
+
+function runNode(args) {
+  const result = childProcess.spawnSync(process.execPath, args, {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    timeout: 5 * 60 * 1000,
+    maxBuffer: 4 * 1024 * 1024,
+  });
+  assert.equal(
+    result.status,
+    0,
+    `Node child failed: ${args.join(' ')}\n${result.stderr}\n${result.stdout}`,
   );
   return result;
 }
