@@ -52,6 +52,21 @@ test('verification compares streamed output with stock 7z and an independent byt
   assert.match(harness, /createHash\(['"]sha256['"]\)/);
   assert.match(harness, /native.*7z|7z.*native/i);
   assert.match(harness, /runNative\(\['t'/);
+  assert.match(harness, /runNative\(\['l'/);
   assert.match(harness, /runNative\(\['x'/);
   assert.match(harness, /expected.*concaten/i);
+  assert.match(harness, /orderedChunk/);
+});
+
+test('stock 7z interoperability gate also validates a JS7z reference archive', async () => {
+  const harness = await readPrototypeFile('verify.mjs');
+  const js7zReference = await readPrototypeFile('js7z-reference.cjs');
+
+  assert.match(harness, /js7z-reference\.cjs/);
+  assert.match(harness, /js7zReferenceArchive/);
+  assert.match(harness, /js7zStock7zTestPassed/);
+  assert.match(harness, /js7zStock7zListPassed/);
+  assert.match(harness, /js7zStock7zExtractPassed/);
+  assert.match(js7zReference, /require\(['"]js7z-tools['"]\)/);
+  assert.match(js7zReference, /callMain\s*\(/);
 });
