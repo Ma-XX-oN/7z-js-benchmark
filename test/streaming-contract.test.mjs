@@ -70,3 +70,18 @@ test('stock 7z interoperability gate also validates a JS7z reference archive', a
   assert.match(js7zReference, /require\(['"]js7z-tools['"]\)/);
   assert.match(js7zReference, /callMain\s*\(/);
 });
+
+test('performance benchmark covers direct WASM, JS7z threading, native 7z, and memory scaling', async () => {
+  const benchmark = await readPrototypeFile('benchmark.mjs');
+
+  assert.match(benchmark, /performance\.now\s*\(/);
+  assert.match(benchmark, /warmup/i);
+  assert.match(benchmark, /repetitions/i);
+  assert.match(benchmark, /js7z-tools/);
+  assert.match(benchmark, /single/);
+  assert.match(benchmark, /auto/);
+  assert.match(benchmark, /native7z/);
+  assert.match(benchmark, /peakWasmHeapBytes/);
+  assert.match(benchmark, /memoryScaling/);
+  assert.match(benchmark, /validateStock7zArchive/);
+});
