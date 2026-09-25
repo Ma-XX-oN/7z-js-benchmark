@@ -42,7 +42,8 @@ test('verification does not depend on an unexported Emscripten heap view', async
 
   assert.doesNotMatch(harness, /module\.HEAPU8/);
   assert.match(source, /HEAPU8\.subarray\s*\(/);
-  assert.match(source, /emscripten_get_heap_size\s*\(/);
+  assert.match(source, /stream7z_heap_size\s*\(/);
+  assert.match(source, /stream7z_js_heap_size\s*\(/);
 });
 
 test('verification compares streamed output with stock 7z and an independent byte oracle', async () => {
