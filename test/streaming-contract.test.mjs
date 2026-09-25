@@ -21,11 +21,17 @@ test('streaming 7z prototype is a library API, not a CLI wrapper', async () => {
   assert.doesNotMatch(source, /\bexec[lvpe]*\s*\(/);
 });
 
-test('streaming build pins the investigated secure upstream versions', async () => {
+test('streaming build pins secure upstream versions and cross-compiles dependencies', async () => {
   const build = await readPrototypeFile('build.sh');
 
   assert.match(build, /LIBARCHIVE_VERSION=3\.8\.9/);
   assert.match(build, /XZ_VERSION=5\.8\.4/);
+  assert.match(build, /EMSCRIPTEN_HOST=wasm32-unknown-emscripten/);
+  assert.equal(
+    (build.match(/--host="\$EMSCRIPTEN_HOST"/g) ?? []).length,
+    2,
+    'both xz and libarchive configure invocations must be marked as cross-compiles',
+  );
 });
 
 test('verification compares streamed output with an independent byte oracle', async () => {

@@ -4,6 +4,7 @@ set -euo pipefail
 LIBARCHIVE_VERSION=3.8.9
 XZ_VERSION=5.8.4
 EMSDK_IMAGE_DIGEST=d0be652409a4d3362b8a36c3279dd1123ff1c9327e603d86d9361aa84f1d2e4c
+EMSCRIPTEN_HOST=wasm32-unknown-emscripten
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK="$HERE/.build"
@@ -37,6 +38,7 @@ fetch_extract \
 if [[ ! -f "$PREFIX/lib/liblzma.a" ]]; then
   pushd "$XZ_SOURCE" >/dev/null
   emconfigure ./configure \
+    --host="$EMSCRIPTEN_HOST" \
     --prefix="$PREFIX" \
     --disable-shared \
     --enable-static \
@@ -64,6 +66,7 @@ if [[ ! -f "$PREFIX/lib/libarchive.a" ]]; then
   export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
   export PKG_CONFIG_LIBDIR="$PREFIX/lib/pkgconfig"
   emconfigure ./configure \
+    --host="$EMSCRIPTEN_HOST" \
     --prefix="$PREFIX" \
     --disable-shared \
     --enable-static \
