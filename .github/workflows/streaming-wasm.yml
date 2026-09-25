@@ -24,6 +24,7 @@ jobs:
         run: npm test
 
   wasm-streaming:
+    needs: contract
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     container:
@@ -50,10 +51,13 @@ jobs:
       - name: Verify streaming decompress to continuous compress
         run: node prototype/libarchive-streaming/verify.mjs
 
+      - name: Benchmark direct WASM against JS7z and native 7z
+        run: node prototype/libarchive-streaming/benchmark.mjs
+
       - name: Re-run repository tests after build
         run: npm test
 
-      - name: Upload streaming diagnostics and result
+      - name: Upload streaming diagnostics and results
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -61,4 +65,5 @@ jobs:
           path: |
             prototype/libarchive-streaming/build.log
             benchmark-results/streaming-wasm-results.json
+            benchmark-results/streaming-performance-results.json
           if-no-files-found: warn
