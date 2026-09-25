@@ -85,3 +85,25 @@ test('performance benchmark covers direct WASM, JS7z threading, native 7z, and m
   assert.match(benchmark, /memoryScaling/);
   assert.match(benchmark, /validateStock7zArchive/);
 });
+
+test('memory benchmark measures process memory in isolated cases and covers 128 MiB', async () => {
+  const benchmark = await readPrototypeFile('benchmark.mjs');
+  const memoryCase = await readPrototypeFile('memory-case.mjs');
+
+  assert.match(benchmark, /memory-case\.mjs/);
+  assert.match(benchmark, /4,16,32,64,128/);
+  assert.match(benchmark, /peakProcessRssBytes/);
+  assert.match(benchmark, /peakProcessArrayBuffersBytes/);
+  assert.match(memoryCase, /process\.memoryUsage\s*\(/);
+  assert.match(memoryCase, /peakProcessRssBytes/);
+  assert.match(memoryCase, /peakProcessArrayBuffersBytes/);
+});
+
+test('benchmark measures the actual archived-segments plus active-file repack path', async () => {
+  const benchmark = await readPrototypeFile('benchmark.mjs');
+
+  assert.match(benchmark, /dcRepack/);
+  assert.match(benchmark, /pipeReaderToWriter/);
+  assert.match(benchmark, /writerAppendSource/);
+  assert.match(benchmark, /archivedSegments/);
+});
