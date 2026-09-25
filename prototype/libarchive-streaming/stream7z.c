@@ -8,6 +8,7 @@
 #include <string.h>
 
 #define STREAM7Z_IO_BUFFER (64u * 1024u)
+#define STREAM7Z_TRANSFER_BUFFER (256u * 1024u)
 
 typedef struct {
   struct archive *archive;
@@ -30,7 +31,8 @@ static char stream7z_error[512];
 EM_JS(int, stream7z_js_read, (int source_id, unsigned char *dest, int capacity), {
   const fn = Module['stream7zRead'];
   if (typeof fn !== 'function') return -1;
-  return fn(source_id, dest, capacity) | 0;
+  const view = HEAPU8.subarray(dest, dest + capacity);
+  return fn(source_id, view) | 0;
 });
 
 EM_JS(double, stream7z_js_seek, (int source_id, double offset, int whence), {
@@ -42,7 +44,12 @@ EM_JS(double, stream7z_js_seek, (int source_id, double offset, int whence), {
 EM_JS(int, stream7z_js_write, (int output_id, const unsigned char *data, int length), {
   const fn = Module['stream7zWrite'];
   if (typeof fn !== 'function') return -1;
-  return fn(output_id, data, length) | 0;
+  const view = HEAPU8.subarray(data, data + length);
+  return fn(output_id, view) | 0;
+});
+
+EM_JS(double, stream7z_js_heap_size, (), {
+  return HEAPU8.buffer.byteLength;
 });
 
 static void stream7z_set_error(const char *message) {
@@ -60,6 +67,11 @@ const char *stream7z_last_error(void) {
   return stream7z_error;
 }
 
+EMSCRIPTEN_KEEPALIVE
+double stream7z_heap_size(void) {
+  return stream7z_js_heap_size();
+}
+
 static la_ssize_t stream7z_read_callback(
     struct archive *archive,
     void *client_data,
@@ -69,7 +81,7 @@ static la_ssize_t stream7z_read_callback(
       reader->source_id,
       reader->input_buffer,
       (int)STREAM7Z_IO_BUFFER);
-  if (count < 0) {
+  if (count < 0 || count > (int)STREAM7Z_IO_BUFFER) {
     archive_set_error(archive, EIO, "JavaScript source read failed");
     return -1;
   }
@@ -327,6 +339,83 @@ int stream7z_writer_write(Stream7zWriter *writer, const unsigned char *data, int
     writer->raw_bytes_written += (double)count;
   }
   return offset;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int stream7z_pipe_reader_to_writer(Stream7zReader *reader, Stream7zWriter *writer) {
+  if (!reader || !writer) {
+    stream7z_set_error("invalid pipe_reader_to_writer arguments");
+    return -1;
+  }
+
+  unsigned char *buffer = (unsigned char *)malloc(STREAM7Z_TRANSFER_BUFFER);
+  if (!buffer) {
+    stream7z_set_error("transfer buffer allocation failed");
+    return -1;
+  }
+
+  int result = 0;
+  for (;;) {
+    int count = stream7z_reader_read(reader, buffer, (int)STREAM7Z_TRANSFER_BUFFER);
+    if (count < 0) {
+      result = -1;
+      break;
+    }
+    if (count == 0) break;
+    if (stream7z_writer_write(writer, buffer, count) != count) {
+      result = -1;
+      break;
+    }
+  }
+
+  free(buffer);
+  return result;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int stream7z_writer_append_source(
+    Stream7zWriter *writer,
+    int source_id,
+    double byte_limit) {
+  if (!writer || byte_limit < 0 || byte_limit > 9007199254740991.0) {
+    stream7z_set_error("invalid writer_append_source arguments");
+    return -1;
+  }
+
+  uint64_t remaining = (uint64_t)byte_limit;
+  if ((double)remaining != byte_limit) {
+    stream7z_set_error("writer_append_source byte limit must be an integer");
+    return -1;
+  }
+
+  unsigned char *buffer = (unsigned char *)malloc(STREAM7Z_IO_BUFFER);
+  if (!buffer) {
+    stream7z_set_error("source transfer buffer allocation failed");
+    return -1;
+  }
+
+  int result = 0;
+  while (remaining > 0) {
+    int request = remaining > STREAM7Z_IO_BUFFER
+        ? (int)STREAM7Z_IO_BUFFER
+        : (int)remaining;
+    int count = stream7z_js_read(source_id, buffer, request);
+    if (count <= 0 || count > request) {
+      stream7z_set_error(count == 0
+          ? "source ended before requested snapshot boundary"
+          : "JavaScript source read failed during append");
+      result = -1;
+      break;
+    }
+    if (stream7z_writer_write(writer, buffer, count) != count) {
+      result = -1;
+      break;
+    }
+    remaining -= (uint64_t)count;
+  }
+
+  free(buffer);
+  return result;
 }
 
 EMSCRIPTEN_KEEPALIVE
