@@ -22,3 +22,37 @@ jobs:
 
       - name: Run contract tests
         run: npm test
+
+  wasm-streaming:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    container:
+      image: emscripten/emsdk@sha256:d0be652409a4d3362b8a36c3279dd1123ff1c9327e603d86d9361aa84f1d2e4c
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build and verification tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            curl xz-utils pkg-config make nodejs npm
+
+      - name: Install benchmark dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build direct libarchive WASM module
+        run: bash prototype/libarchive-streaming/build.sh
+
+      - name: Verify streaming decompress to continuous compress
+        run: node prototype/libarchive-streaming/verify.mjs
+
+      - name: Re-run repository tests after build
+        run: npm test
+
+      - name: Upload streaming result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: streaming-7z-wasm-results
+          path: benchmark-results/streaming-wasm-results.json
+          if-no-files-found: warn
