@@ -1,0 +1,24 @@
+name: Streaming 7z WASM prototype
+
+on:
+  push:
+    branches:
+      - issue-3-streaming-7z-wasm
+  workflow_dispatch:
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run contract tests
+        run: npm test
