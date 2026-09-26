@@ -33,6 +33,11 @@ EM_JS(int, js_read, (int id, unsigned char *p, int n), {
   if (typeof f !== 'function') return -1;
   return f(id, HEAPU8.subarray(p, p + n)) | 0;
 });
+EM_JS(int, js_read_at, (int id, double pos, unsigned char *p, int n), {
+  const f = Module['stream7zReadAt'];
+  if (typeof f !== 'function') return -1;
+  return f(id, pos, HEAPU8.subarray(p, p + n)) | 0;
+});
 EM_JS(int, js_write_at, (int id, double pos, const unsigned char *p, int n), {
   const f = Module['stream7zWriteAt'];
   if (typeof f !== 'function') return -1;
@@ -58,6 +63,38 @@ Z7_COM7F_IMF(CJsInStream::Read(void *data, UInt32 size, UInt32 *processedSize)) 
   const int n = js_read(Id, (unsigned char *)data, (int)size);
   if (n < 0) return E_FAIL;
   if (processedSize) *processedSize = (UInt32)n;
+  return S_OK;
+}
+
+class CJsSeekInStream Z7_final: public IInStream, public CMyUnknownImp {
+  Z7_COM_UNKNOWN_IMP_2(ISequentialInStream, IInStream)
+  Z7_IFACE_COM7_IMP(ISequentialInStream)
+  Z7_IFACE_COM7_IMP(IInStream)
+public:
+  int Id;
+  UInt64 Pos;
+  UInt64 Size;
+  CJsSeekInStream(int id, UInt64 size): Id(id), Pos(0), Size(size) {}
+};
+Z7_COM7F_IMF(CJsSeekInStream::Read(void *data, UInt32 size, UInt32 *processedSize)) {
+  const UInt64 remaining = Pos < Size ? Size - Pos : 0;
+  const UInt32 wanted = remaining < size ? (UInt32)remaining : size;
+  const int n = js_read_at(Id, (double)Pos, (unsigned char *)data, (int)wanted);
+  if (n < 0) return E_FAIL;
+  Pos += (UInt32)n;
+  if (processedSize) *processedSize = (UInt32)n;
+  return S_OK;
+}
+Z7_COM7F_IMF(CJsSeekInStream::Seek(Int64 offset, UInt32 origin, UInt64 *newPosition)) {
+  Int64 base;
+  if (origin == STREAM_SEEK_SET) base = 0;
+  else if (origin == STREAM_SEEK_CUR) base = (Int64)Pos;
+  else if (origin == STREAM_SEEK_END) base = (Int64)Size;
+  else return STG_E_INVALIDFUNCTION;
+  const Int64 next = base + offset;
+  if (next < 0) return HRESULT_WIN32_ERROR_NEGATIVE_SEEK;
+  Pos = (UInt64)next;
+  if (newPosition) *newPosition = Pos;
   return S_OK;
 }
 
@@ -139,6 +176,32 @@ Z7_COM7F_IMF(CUpdateCallback::SetOperationResult(Int32 result)) {
   return result == NUpdate::NOperationResult::kOK ? S_OK : E_FAIL;
 }
 
+class CExtractCallback Z7_final: public IArchiveExtractCallback, public CMyUnknownImp {
+  Z7_COM_UNKNOWN_IMP_2(IArchiveExtractCallback, IProgress)
+  Z7_IFACE_COM7_IMP(IProgress)
+  Z7_IFACE_COM7_IMP(IArchiveExtractCallback)
+public:
+  int OutputId;
+  CMyComPtr<ISequentialOutStream> Out;
+  explicit CExtractCallback(int outputId): OutputId(outputId) {}
+};
+Z7_COM7F_IMF(CExtractCallback::SetTotal(UInt64)) { return S_OK; }
+Z7_COM7F_IMF(CExtractCallback::SetCompleted(const UInt64 *)) { return S_OK; }
+Z7_COM7F_IMF(CExtractCallback::GetStream(UInt32, ISequentialOutStream **outStream, Int32 askExtractMode)) {
+  if (askExtractMode != NArchive::NExtract::NAskMode::kExtract) {
+    *outStream = NULL;
+    return S_OK;
+  }
+  Out = new CJsOutStream(OutputId);
+  *outStream = Out;
+  if (*outStream) (*outStream)->AddRef();
+  return S_OK;
+}
+Z7_COM7F_IMF(CExtractCallback::PrepareOperation(Int32)) { return S_OK; }
+Z7_COM7F_IMF(CExtractCallback::SetOperationResult(Int32 resultEOperationResult)) {
+  return resultEOperationResult == NArchive::NExtract::NOperationResult::kOK ? S_OK : E_FAIL;
+}
+
 static UString AsciiName(const char *s) {
   UString out;
   while (*s) {
@@ -191,6 +254,44 @@ int stream7z_create(int sourceId, int outputId, const char *memberName, double s
   hr = archive->UpdateItems(out, 1, callback);
   if (hr != S_OK) {
     snprintf(g_error, sizeof(g_error), "UpdateItems failed: 0x%08x", (unsigned)hr);
+    return -1;
+  }
+  return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int stream7z_extract(int sourceId, double archiveSizeDouble, int outputId) {
+  g_error[0] = 0;
+  if (archiveSizeDouble < 0 || archiveSizeDouble > 9007199254740991.0) {
+    snprintf(g_error, sizeof(g_error), "invalid archive size");
+    return -1;
+  }
+  const UInt64 archiveSize = (UInt64)archiveSizeDouble;
+  if ((double)archiveSize != archiveSizeDouble) {
+    snprintf(g_error, sizeof(g_error), "archive size must be an integer");
+    return -1;
+  }
+  NArchive::N7z::CHandler *handlerSpec = new NArchive::N7z::CHandler;
+  CMyComPtr<IInArchive> archive = handlerSpec;
+  CMyComPtr<IInStream> in = new CJsSeekInStream(sourceId, archiveSize);
+  HRESULT hr = archive->Open(in, NULL, NULL);
+  if (hr != S_OK) {
+    snprintf(g_error, sizeof(g_error), "Open failed: 0x%08x", (unsigned)hr);
+    return -1;
+  }
+  UInt32 numItems = 0;
+  hr = archive->GetNumberOfItems(&numItems);
+  if (hr != S_OK || numItems != 1) {
+    snprintf(g_error, sizeof(g_error), "expected one archive member");
+    archive->Close();
+    return -1;
+  }
+  CMyComPtr<IArchiveExtractCallback> callback = new CExtractCallback(outputId);
+  const UInt32 index = 0;
+  hr = archive->Extract(&index, 1, false, callback);
+  archive->Close();
+  if (hr != S_OK) {
+    snprintf(g_error, sizeof(g_error), "Extract failed: 0x%08x", (unsigned)hr);
     return -1;
   }
   return 0;
