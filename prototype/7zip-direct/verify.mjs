@@ -25,7 +25,8 @@ const direct=path.join(work,'direct.7z');
 outFd=fs.openSync(direct,'w');
 const mod=await createModule({
   stream7zRead(id,view){if(id!==1)return -1;const n=fs.readSync(inFd,view,0,view.length,inPos);inPos+=n;return n;},
-  stream7zWrite(id,view){if(id!==1)return -1;return fs.writeSync(outFd,view,0,view.length,null);}
+  stream7zWriteAt(id,pos,view){if(id!==1||!Number.isSafeInteger(pos))return -1;return fs.writeSync(outFd,view,0,view.length,pos);},
+  stream7zSetSize(id,size){if(id!==1||!Number.isSafeInteger(size))return -1;fs.ftruncateSync(outFd,size);return 0;}
 });
 const create=mod.cwrap('stream7z_create','number',['number','number','string','number']);
 const lastError=mod.cwrap('stream7z_last_error','string',[]);
