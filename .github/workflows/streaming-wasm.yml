@@ -66,4 +66,8 @@ jobs:
             prototype/libarchive-streaming/build.log
             benchmark-results/streaming-wasm-results.json
             benchmark-results/streaming-performance-results.json
+            .streaming-work/(1).7z
+            .streaming-work/js7z-reference.7z
+            .streaming-work/native-single-input.7z
+            .streaming-work/expected-concatenation.jsonl
           if-no-files-found: warn
