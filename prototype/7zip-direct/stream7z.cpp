@@ -3,7 +3,7 @@
 #include "../../../Common/MyString.h"
 #include "../../Archive/IArchive.h"
 #include "../../Archive/7z/7zHandler.h"
-#include "../../../../Windows/PropVariant.h"
+#include "../../../Windows/PropVariant.h"
 
 using namespace NArchive;
 
