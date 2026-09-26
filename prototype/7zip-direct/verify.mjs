@@ -33,6 +33,12 @@ const lastError=mod.cwrap('stream7z_last_error','string',[]);
 assert.equal(create(1,1,member,data.length),0,lastError());
 fs.closeSync(inFd);fs.closeSync(outFd);
 
+const repeated=path.join(work,'direct-repeat.7z');
+inFd=fs.openSync(input,'r'); inPos=0; outFd=fs.openSync(repeated,'w');
+assert.equal(create(1,1,member,data.length),0,lastError());
+fs.closeSync(inFd);fs.closeSync(outFd);
+assert.deepEqual(fs.readFileSync(repeated),fs.readFileSync(direct),'direct 7-Zip API output must be deterministic');
+
 const reference=path.join(work,'reference.7z');
 const runner=path.join(repoRoot,'prototype/libarchive-streaming/js7z-reference.cjs');
 const child=childProcess.spawnSync(process.execPath,[runner,work,member,path.basename(reference)],{cwd:repoRoot,encoding:'utf8'});
