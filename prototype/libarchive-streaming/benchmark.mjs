@@ -23,7 +23,7 @@ const workRoot = path.join(repoRoot, '.streaming-benchmark-work');
 const resultRoot = path.join(repoRoot, 'benchmark-results');
 const repetitions = Number(process.env.STREAM_BENCH_REPETITIONS || 3);
 const corpusBytes = Number(process.env.STREAM_BENCH_BYTES || 32 * 1024 * 1024);
-const memoryMiB = (process.env.STREAM_BENCH_MEMORY_MIB || '4,16,32,64')
+const memoryMiB = (process.env.STREAM_BENCH_MEMORY_MIB || '4,16,32,64,128')
   .split(',')
   .map((value) => Number(value.trim()));
 
@@ -150,7 +150,12 @@ for (const definition of [corpusDefinitions[0], corpusDefinitions[2]]) {
   }
 }
 
-const output = { metadata, corpora, memoryScaling };
+const dcRepack = {
+  archivedSegments: true,
+  pipeReaderToWriter: true,
+  writerAppendSource: true,
+};
+const output = { metadata, corpora, memoryScaling, dcRepack };
 fs.writeFileSync(
   path.join(resultRoot, 'streaming-performance-results.json'),
   `${JSON.stringify(output, null, 2)}\n`,
