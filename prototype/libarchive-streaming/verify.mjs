@@ -142,7 +142,7 @@ const writerFinish = module.cwrap('stream7z_writer_finish', 'number', ['number']
 
 const outputArchive = path.join(workRoot, '(1).7z');
 const outputId = registerOutput(outputArchive);
-const outputMember = 'DownloadConversation_chat(1).jsonl';
+const outputMember = 'expected-concatenation.jsonl';
 const writer = writerBegin(outputId, outputMember, expectedRawBytes);
 assert.notEqual(writer, 0, lastError());
 
@@ -239,6 +239,16 @@ const js7zCompatibility = validateStock7zArchive({
 const streamedArchiveBytes = fs.statSync(outputArchive).size;
 const nativeBaselineBytes = fs.statSync(baselineArchive).size;
 const js7zReferenceBytes = fs.statSync(js7zReferenceArchive).size;
+const streamedArchiveSha256 = hashFile(outputArchive);
+const js7zReferenceArchiveSha256 = hashFile(js7zReferenceArchive);
+const streamedArchiveBuffer = fs.readFileSync(outputArchive);
+const js7zReferenceBuffer = fs.readFileSync(js7zReferenceArchive);
+const firstArchiveDifference = firstDifference(streamedArchiveBuffer, js7zReferenceBuffer);
+assert.equal(
+  streamedArchiveSha256,
+  js7zReferenceArchiveSha256,
+  `direct archive must be byte-identical to JS7z reference; first difference at byte ${firstArchiveDifference}`,
+);
 const streamedRatio = streamedArchiveBytes / expectedRawBytes;
 
 // Every chunk is mostly the same incompressible-looking block but begins with
@@ -314,6 +324,14 @@ function orderedChunk(common, ordinal) {
   );
   marker.copy(output, 0, 0, Math.min(marker.length, output.length));
   return output;
+}
+
+function firstDifference(left, right) {
+  const length = Math.min(left.length, right.length);
+  for (let index = 0; index < length; index += 1) {
+    if (left[index] !== right[index]) return index;
+  }
+  return left.length === right.length ? -1 : length;
 }
 
 function hashFile(filePath) {
