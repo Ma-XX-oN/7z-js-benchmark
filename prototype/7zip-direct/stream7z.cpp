@@ -126,12 +126,12 @@ int stream7z_create(int sourceId, int outputId, const char *memberName, double s
 
   NArchive::N7z::CHandler *handlerSpec = new NArchive::N7z::CHandler;
   CMyComPtr<IOutArchive> archive = handlerSpec;
-  const wchar_t *names[] = { L"x", L"0", L"s", L"tm" };
-  NWindows::NCOM::CPropVariant values[4] = {
-    (UInt32)5, L"LZMA2:d=32m:mt=1", true, false
+  const wchar_t *names[] = { L"x", L"0", L"s", L"tm", L"tr" };
+  NWindows::NCOM::CPropVariant values[5] = {
+    (UInt32)5, L"LZMA2:d=32m:mt=1", true, false, false
   };
   HRESULT hr = S_OK;
-  for (unsigned i = 0; i < 4; ++i) {
+  for (unsigned i = 0; i < 5; ++i) {
     hr = handlerSpec->SetProperty(names[i], values[i]);
     if (hr != S_OK) {
       snprintf(g_error, sizeof(g_error), "SetProperty failed: 0x%08x", (unsigned)hr);
