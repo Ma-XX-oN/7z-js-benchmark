@@ -23,6 +23,37 @@ jobs:
       - name: Run contract tests
         run: npm test
 
+
+  direct-browser-payload:
+    needs: contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container:
+      image: emscripten/emsdk@sha256:d0be652409a4d3362b8a36c3279dd1123ff1c9327e603d86d9361aa84f1d2e4c
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install direct-build tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y curl xz-utils make
+
+      - name: Build verified direct 7-Zip API payload
+        shell: bash
+        run: bash prototype/7zip-direct/build.sh
+
+      - name: Emit compressed browser payload for Git-object import
+        shell: bash
+        run: |
+          echo 'STREAM7Z_MJS_GZ_BASE64_BEGIN'
+          gzip -9 -c prototype/7zip-direct/build/stream7z.mjs | base64 -w0
+          echo
+          echo 'STREAM7Z_MJS_GZ_BASE64_END'
+          echo 'STREAM7Z_WASM_GZ_BASE64_BEGIN'
+          gzip -9 -c prototype/7zip-direct/build/stream7z.wasm | base64 -w0
+          echo
+          echo 'STREAM7Z_WASM_GZ_BASE64_END'
+
   wasm-streaming:
     needs: contract
     runs-on: ubuntu-24.04
