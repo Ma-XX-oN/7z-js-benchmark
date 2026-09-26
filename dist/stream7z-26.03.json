@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "version": "26.03",
+  "source_commit": "1c520932a8e71842f3a205d44e8d3de25a452ec9",
+  "workflow_run": 36211703044,
+  "files": {
+    "stream7z.mjs": {
+      "compressed": "stream7z-26.03.mjs.gz",
+      "bytes": 170544,
+      "sha256": "88a3f115e1f60af90b8e9be15cb4026e6581e36fdca733fe1948e7881b8a3391"
+    },
+    "stream7z.wasm": {
+      "compressed": "stream7z-26.03.wasm.gz",
+      "bytes": 1692070,
+      "sha256": "b238bf262f7077f039cfe548922311bb6ce0756aba5679d247b1dc4003fa5353"
+    }
+  }
+}
