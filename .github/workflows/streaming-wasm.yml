@@ -70,6 +70,8 @@ jobs:
         with:
           name: streaming-7z-wasm-results
           path: |
+            prototype/7zip-direct/build/stream7z.mjs
+            prototype/7zip-direct/build/stream7z.wasm
             prototype/libarchive-streaming/build.log
             benchmark-results/streaming-wasm-results.json
             benchmark-results/streaming-performance-results.json
