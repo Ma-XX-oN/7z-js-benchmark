@@ -1,4 +1,5 @@
 #include <emscripten.h>
+#include <stdio.h>
 #include "../../../Common/MyCom.h"
 #include "../../../Common/MyString.h"
 #include "../../Archive/IArchive.h"
@@ -70,7 +71,7 @@ Z7_COM7F_IMF(CUpdateCallback::GetUpdateItemInfo(
   return S_OK;
 }
 Z7_COM7F_IMF(CUpdateCallback::GetProperty(UInt32, PROPID propID, PROPVARIANT *value)) {
-  NCOM::CPropVariant prop;
+  NWindows::NCOM::CPropVariant prop;
   switch (propID) {
     case kpidPath: prop = Name; break;
     case kpidIsDir: prop = false; break;
@@ -124,20 +125,17 @@ int stream7z_create(int sourceId, int outputId, const char *memberName, double s
 
   NArchive::N7z::CHandler *handlerSpec = new NArchive::N7z::CHandler;
   CMyComPtr<IOutArchive> archive = handlerSpec;
-  CMyComPtr<ISetProperties> props;
-  handlerSpec->QueryInterface(IID_ISetProperties, (void **)&props);
-  if (!props) {
-    snprintf(g_error, sizeof(g_error), "ISetProperties unavailable");
-    return -1;
-  }
   const wchar_t *names[] = { L"x", L"0", L"s", L"tm" };
-  NCOM::CPropVariant values[4] = {
+  NWindows::NCOM::CPropVariant values[4] = {
     (UInt32)5, L"LZMA2:d=32m:mt=1", true, false
   };
-  HRESULT hr = props->SetProperties(names, values, 4);
-  if (hr != S_OK) {
-    snprintf(g_error, sizeof(g_error), "SetProperties failed: 0x%08x", (unsigned)hr);
-    return -1;
+  HRESULT hr = S_OK;
+  for (unsigned i = 0; i < 4; ++i) {
+    hr = handlerSpec->SetProperty(names[i], values[i]);
+    if (hr != S_OK) {
+      snprintf(g_error, sizeof(g_error), "SetProperty failed: 0x%08x", (unsigned)hr);
+      return -1;
+    }
   }
 
   CMyComPtr<ISequentialOutStream> out = new CJsOutStream(outputId);
