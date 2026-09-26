@@ -14,10 +14,15 @@ EM_JS(int, js_read, (int id, unsigned char *p, int n), {
   if (typeof f !== 'function') return -1;
   return f(id, HEAPU8.subarray(p, p + n)) | 0;
 });
-EM_JS(int, js_write, (int id, const unsigned char *p, int n), {
-  const f = Module['stream7zWrite'];
+EM_JS(int, js_write_at, (int id, double pos, const unsigned char *p, int n), {
+  const f = Module['stream7zWriteAt'];
   if (typeof f !== 'function') return -1;
-  return f(id, HEAPU8.subarray(p, p + n)) | 0;
+  return f(id, pos, HEAPU8.subarray(p, p + n)) | 0;
+});
+EM_JS(int, js_set_size, (int id, double size), {
+  const f = Module['stream7zSetSize'];
+  if (typeof f !== 'function') return -1;
+  return f(id, size) | 0;
 });
 EM_JS(double, js_heap_size, (), { return HEAPU8.buffer.byteLength; });
 
@@ -37,17 +42,40 @@ Z7_COM7F_IMF(CJsInStream::Read(void *data, UInt32 size, UInt32 *processedSize)) 
   return S_OK;
 }
 
-class CJsOutStream Z7_final: public ISequentialOutStream, public CMyUnknownImp {
-  Z7_COM_UNKNOWN_IMP_1(ISequentialOutStream)
+class CJsOutStream Z7_final: public IOutStream, public CMyUnknownImp {
+  Z7_COM_UNKNOWN_IMP_2(ISequentialOutStream, IOutStream)
   Z7_IFACE_COM7_IMP(ISequentialOutStream)
+  Z7_IFACE_COM7_IMP(IOutStream)
 public:
   int Id;
-  explicit CJsOutStream(int id): Id(id) {}
+  UInt64 Pos;
+  UInt64 Size;
+  explicit CJsOutStream(int id): Id(id), Pos(0), Size(0) {}
 };
 Z7_COM7F_IMF(CJsOutStream::Write(const void *data, UInt32 size, UInt32 *processedSize)) {
-  const int n = js_write(Id, (const unsigned char *)data, (int)size);
+  const int n = js_write_at(Id, (double)Pos, (const unsigned char *)data, (int)size);
   if (n < 0 || (UInt32)n != size) return E_FAIL;
+  Pos += (UInt32)n;
+  if (Pos > Size) Size = Pos;
   if (processedSize) *processedSize = (UInt32)n;
+  return S_OK;
+}
+Z7_COM7F_IMF(CJsOutStream::Seek(Int64 offset, UInt32 origin, UInt64 *newPosition)) {
+  Int64 base;
+  if (origin == STREAM_SEEK_SET) base = 0;
+  else if (origin == STREAM_SEEK_CUR) base = (Int64)Pos;
+  else if (origin == STREAM_SEEK_END) base = (Int64)Size;
+  else return STG_E_INVALIDFUNCTION;
+  const Int64 next = base + offset;
+  if (next < 0) return HRESULT_WIN32_ERROR_NEGATIVE_SEEK;
+  Pos = (UInt64)next;
+  if (newPosition) *newPosition = Pos;
+  return S_OK;
+}
+Z7_COM7F_IMF(CJsOutStream::SetSize(UInt64 newSize)) {
+  if (js_set_size(Id, (double)newSize) != 0) return E_FAIL;
+  Size = newSize;
+  if (Pos > Size) Pos = Size;
   return S_OK;
 }
 
