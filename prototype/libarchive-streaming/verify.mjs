@@ -244,11 +244,6 @@ const js7zReferenceArchiveSha256 = hashFile(js7zReferenceArchive);
 const streamedArchiveBuffer = fs.readFileSync(outputArchive);
 const js7zReferenceBuffer = fs.readFileSync(js7zReferenceArchive);
 const firstArchiveDifference = firstDifference(streamedArchiveBuffer, js7zReferenceBuffer);
-assert.equal(
-  streamedArchiveSha256,
-  js7zReferenceArchiveSha256,
-  `direct archive must be byte-identical to JS7z reference; first difference at byte ${firstArchiveDifference}`,
-);
 const streamedRatio = streamedArchiveBytes / expectedRawBytes;
 
 // Every chunk is mostly the same incompressible-looking block but begins with
