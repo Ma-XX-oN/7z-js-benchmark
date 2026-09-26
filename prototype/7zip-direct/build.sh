@@ -25,6 +25,6 @@ PY
 pushd "$SRC/7z-Src/CPP/7zip/Bundles/Alone2" >/dev/null
 emmake make -f makefile.gcc ST_MODE=1 -j"${JOBS:-2}"
 popd >/dev/null
-cp "$SRC/7z-Src/CPP/7zip/Bundles/Alone2/b/g/js7z.js" "$HERE/build/stream7z.mjs"
-cp "$SRC/7z-Src/CPP/7zip/Bundles/Alone2/b/g/js7z.wasm" "$HERE/build/stream7z.wasm"
+cp "$SRC/7z-Src/CPP/7zip/Bundles/Alone2/_o/js7z.js" "$HERE/build/stream7z.mjs"
+cp "$SRC/7z-Src/CPP/7zip/Bundles/Alone2/_o/js7z.wasm" "$HERE/build/stream7z.wasm"
 printf 'Built direct 7-Zip API module\n'
