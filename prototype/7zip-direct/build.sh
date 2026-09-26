@@ -16,7 +16,7 @@ import sys
 p=Path(sys.argv[1])
 s=p.read_text()
 needle='-sMODULARIZE -sEXPORT_NAME="JS7z"'
-repl=needle + " -sNO_ENTRY=1 -sEXPORTED_FUNCTIONS='[\"_stream7z_create\",\"_stream7z_last_error\",\"_stream7z_heap_size\"]' -sEXPORTED_RUNTIME_METHODS='[\"cwrap\"]'"
+repl=needle + " --no-entry -sEXPORTED_FUNCTIONS='[\"_stream7z_create\",\"_stream7z_last_error\",\"_stream7z_heap_size\"]' -sEXPORTED_RUNTIME_METHODS='[\"cwrap\"]'"
 s=s.replace(needle,repl)
 # The stock block adds callMain/FS exports; the direct API intentionally has neither.
 s=s.replace("LIB2 += -sEXPORTED_RUNTIME_METHODS='[\"callMain\", \"FS\"]'","")
