@@ -1,5 +1,6 @@
 #include <emscripten.h>
 #include <stdio.h>
+#include "../../../Common/MyInitGuid.h"
 #include "../../../Common/MyCom.h"
 #include "../../../Common/MyString.h"
 #include "../../Archive/IArchive.h"
