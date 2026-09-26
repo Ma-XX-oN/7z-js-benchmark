@@ -19,6 +19,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '../..');
 const buildModule = path.join(here, 'build', 'stream7z.mjs');
 const js7zRunner = path.join(here, 'js7z-benchmark.cjs');
+const memoryCaseRunner = path.join(here, 'memory-case.mjs');
 const workRoot = path.join(repoRoot, '.streaming-benchmark-work');
 const resultRoot = path.join(repoRoot, 'benchmark-results');
 const repetitions = Number(process.env.STREAM_BENCH_REPETITIONS || 3);
@@ -134,7 +135,13 @@ for (const definition of [corpusDefinitions[0], corpusDefinitions[2]]) {
     const inputPath = path.join(root, inputName);
     const inputRel = path.relative(workRoot, inputPath);
     const archiveRel = `out/memory-${definition.kind}-${sizeMiB}m.7z`;
-    const run = await runDirectOnce(inputRel, archiveRel, inputName);
+    const memoryResult = childProcess.spawnSync(
+      process.execPath,
+      [memoryCaseRunner, workRoot, inputRel, archiveRel, inputName],
+      { cwd: repoRoot, encoding: 'utf8', timeout: 30 * 60 * 1000, maxBuffer: 4 * 1024 * 1024 },
+    );
+    assert.equal(memoryResult.status, 0, `${memoryResult.stderr}\n${memoryResult.stdout}`);
+    const run = JSON.parse(memoryResult.stdout.trim().split(/\r?\n/).filter(Boolean).at(-1));
     runNativeCommand(['t', '-bd', '-bso0', '-bse0', path.join(workRoot, archiveRel)]);
     memoryScaling.push({
       kind: definition.kind,
@@ -146,6 +153,8 @@ for (const definition of [corpusDefinitions[0], corpusDefinitions[2]]) {
       initialWasmHeapBytes: run.initialWasmHeapBytes,
       peakWasmHeapBytes: run.peakWasmHeapBytes,
       heapGrowthBytes: run.peakWasmHeapBytes - run.initialWasmHeapBytes,
+      peakProcessRssBytes: run.peakProcessRssBytes,
+      peakProcessArrayBuffersBytes: run.peakProcessArrayBuffersBytes,
     });
   }
 }
