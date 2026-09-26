@@ -27,5 +27,5 @@ emmake make -f makefile.gcc ST_MODE=1 EXPORT_ES6=1 -j"${JOBS:-2}"
 popd >/dev/null
 cp "$SRC/7z-Src/CPP/7zip/Bundles/Alone2/_o/js7z.mjs" "$HERE/build/stream7z.mjs"
 cp "$SRC/7z-Src/CPP/7zip/Bundles/Alone2/_o/js7z.wasm" "$HERE/build/stream7z.wasm"
-sed -i 's/js7z\\.wasm/stream7z.wasm/g' "$HERE/build/stream7z.mjs"
+sed -i 's/js7z\.wasm/stream7z.wasm/g' "$HERE/build/stream7z.mjs"
 printf 'Built direct 7-Zip API module\n'
