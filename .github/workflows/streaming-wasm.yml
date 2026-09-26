@@ -54,6 +54,15 @@ jobs:
           echo
           echo 'STREAM7Z_WASM_GZ_BASE64_END'
 
+      - name: Upload verified direct browser payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: direct-browser-payload
+          path: |
+            prototype/7zip-direct/build/stream7z.mjs
+            prototype/7zip-direct/build/stream7z.wasm
+          if-no-files-found: error
+
   wasm-streaming:
     needs: contract
     runs-on: ubuntu-24.04
