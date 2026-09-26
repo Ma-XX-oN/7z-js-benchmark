@@ -46,9 +46,14 @@ assert.equal(child.status,0,child.stderr+'\n'+child.stdout);
 const d=fs.readFileSync(direct), r=fs.readFileSync(reference);
 let first=-1; for(let i=0;i<Math.min(d.length,r.length);i++){if(d[i]!==r[i]){first=i;break;}} if(first<0&&d.length!==r.length)first=Math.min(d.length,r.length);
 const dh=createHash('sha256').update(d).digest('hex'), rh=createHash('sha256').update(r).digest('hex');
-assert.equal(dh,rh,`direct 7-Zip API archive differs from JS7z at byte ${first}; sizes ${d.length}/${r.length}`);
+// JS7z 2.5.0 embeds 7-Zip 25.01.  26.03 divergence is diagnostic only.
+// Determinism, exact extracted content, and stock-7z interoperability are hard gates.
+const extractDir=path.join(work,'extracted'); fs.mkdirSync(extractDir,{recursive:true});
+const x=childProcess.spawnSync(native7z,['x','-y','-bd',`-o${extractDir}`,direct],{encoding:'utf8'});
+assert.equal(x.status,0,x.stderr+'\\n'+x.stdout);
+assert.deepEqual(fs.readFileSync(path.join(extractDir,member)),data,'26.03 archive must extract to exact source bytes');
 for(const archive of [direct,reference]){
  const t=childProcess.spawnSync(native7z,['t','-bd','-bso0','-bse0',archive],{encoding:'utf8'});
  assert.equal(t.status,0,t.stderr+'\n'+t.stdout);
 }
-console.log(JSON.stringify({bytes:d.length,sha256:dh,firstDifference:first}));
+console.log(JSON.stringify({version:'26.03',bytes:d.length,sha256:dh,js7z25Sha256:rh,firstDifference:first,stock7zExtractExact:true}));
