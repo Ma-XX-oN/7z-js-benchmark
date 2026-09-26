@@ -1,5 +1,7 @@
 #include <emscripten.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/sysinfo.h>
 #include "../../../Common/MyInitGuid.h"
 #include "../../../Common/MyCom.h"
 #include "../../../Common/MyString.h"
@@ -8,6 +10,21 @@
 #include "../../../Windows/PropVariant.h"
 
 using namespace NArchive;
+
+// 7-Zip 26.03 queries host RAM even in the single-threaded build. Emscripten
+// declares sysinfo() but does not provide it, so report the actual Wasm heap.
+extern "C" int sysinfo(struct sysinfo *info) {
+  if (!info) return -1;
+  memset(info, 0, sizeof(*info));
+  info->mem_unit = 1;
+  info->totalram = (unsigned long)emscripten_get_heap_size();
+  info->freeram = info->totalram;
+  return 0;
+}
+
+// Alone2 retains its console wrapper in 26.03. The direct module has no CLI;
+// satisfy that unreachable wrapper without reintroducing callMain().
+int Main2(int, char **) { return 0; }
 
 EM_JS(int, js_read, (int id, unsigned char *p, int n), {
   const f = Module['stream7zRead'];
