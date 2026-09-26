@@ -41,6 +41,13 @@ jobs:
       - name: Install benchmark dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Build direct 7-Zip API WASM module
+        shell: bash
+        run: bash prototype/7zip-direct/build.sh
+
+      - name: Verify direct 7-Zip API byte identity
+        run: node prototype/7zip-direct/verify.mjs
+
       - name: Build direct libarchive WASM module
         shell: bash
         run: |
