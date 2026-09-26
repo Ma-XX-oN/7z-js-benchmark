@@ -1,0 +1,25 @@
+ifdef EMSCRIPTEN
+PROG = direct7z.mjs
+else
+PROG = direct7z
+endif
+
+ST_MODE = 1
+CONSOLE_VARIANT_FLAGS=-DZ7_PROG_VARIANT_Z
+
+include ../Format7zF/Arc_gcc.mak
+
+LOCAL_FLAGS = \
+  $(LOCAL_FLAGS_ST) \
+
+OBJS = \
+  $(ARC_OBJS) \
+  $O/Direct7z.o \
+
+include ../../7zip_gcc.mak
+
+ifdef EMSCRIPTEN
+LIB2 += -sNO_ENTRY=1 -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createDirect7z \
+  -sEXPORTED_RUNTIME_METHODS='["cwrap"]' \
+  -sEXPORTED_FUNCTIONS='["_stream7z_create_archive","_stream7z_last_error"]'
+endif
