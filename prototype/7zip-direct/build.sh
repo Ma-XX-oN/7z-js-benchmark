@@ -9,6 +9,7 @@ if [[ ! -d "$SRC" ]]; then
   mkdir -p "$SRC"
   curl --fail --location --retry 3 "$SOURCE_URL" | tar -xJ -C "$SRC"
 fi
+chmod -R u+w "$SRC"
 cp "$HERE/stream7z.cpp" "$SRC/CPP/7zip/UI/Console/Main.cpp"
 cat >> "$SRC/CPP/7zip/7zip_gcc.mak" <<'MAKE'
 LDFLAGS += --no-entry -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME="Stream7zModule" \
