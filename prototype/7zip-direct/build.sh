@@ -14,7 +14,7 @@ cp "$HERE/stream7z.cpp" "$SRC/CPP/7zip/UI/Console/Main.cpp"
 cat >> "$SRC/CPP/7zip/7zip_gcc.mak" <<'MAKE'
 LDFLAGS += --no-entry -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME="Stream7zModule" \
   -sALLOW_MEMORY_GROWTH=1 \
-  -sEXPORTED_FUNCTIONS='["_stream7z_create","_stream7z_last_error","_stream7z_heap_size"]' \
+  -sEXPORTED_FUNCTIONS='["_stream7z_create","_stream7z_extract","_stream7z_last_error","_stream7z_heap_size"]' \
   -sEXPORTED_RUNTIME_METHODS='["cwrap"]'
 MAKE
 pushd "$SRC/CPP/7zip/Bundles/Alone2" >/dev/null
