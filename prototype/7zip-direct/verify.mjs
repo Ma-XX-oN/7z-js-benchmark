@@ -21,12 +21,14 @@ fs.writeFileSync(input,data);
 const modulePath=path.join(here,'build/stream7z.mjs');
 const createModule=(await import(pathToFileURL(modulePath).href)).default;
 let inFd=fs.openSync(input,'r'), inPos=0, outFd=-1;
+let randomInFd=-1;
 const direct=path.join(work,'direct.7z');
 outFd=fs.openSync(direct,'w');
 const mod=await createModule({
   stream7zRead(id,view){if(id!==1)return -1;const n=fs.readSync(inFd,view,0,view.length,inPos);inPos+=n;return n;},
-  stream7zWriteAt(id,pos,view){if(id!==1||!Number.isSafeInteger(pos))return -1;return fs.writeSync(outFd,view,0,view.length,pos);},
-  stream7zSetSize(id,size){if(id!==1||!Number.isSafeInteger(size))return -1;fs.ftruncateSync(outFd,size);return 0;}
+  stream7zReadAt(id,pos,view){if(id!==2||randomInFd<0||!Number.isSafeInteger(pos))return -1;return fs.readSync(randomInFd,view,0,view.length,pos);},
+  stream7zWriteAt(id,pos,view){if((id!==1&&id!==2)||!Number.isSafeInteger(pos))return -1;return fs.writeSync(outFd,view,0,view.length,pos);},
+  stream7zSetSize(id,size){if((id!==1&&id!==2)||!Number.isSafeInteger(size))return -1;fs.ftruncateSync(outFd,size);return 0;}
 });
 const create=mod.cwrap('stream7z_create','number',['number','number','string','number']);
 const lastError=mod.cwrap('stream7z_last_error','string',[]);
@@ -38,6 +40,17 @@ inFd=fs.openSync(input,'r'); inPos=0; outFd=fs.openSync(repeated,'w');
 assert.equal(create(1,1,member,data.length),0,lastError());
 fs.closeSync(inFd);fs.closeSync(outFd);
 assert.deepEqual(fs.readFileSync(repeated),fs.readFileSync(direct),'direct 7-Zip API output must be deterministic');
+
+// Browser-facing test bench contract: consume the archive through the same Wasm
+// module and callbacks instead of relying on the stock 7z executable to decode it.
+const wasmExtracted=path.join(work,'wasm-extracted.jsonl');
+randomInFd=fs.openSync(direct,'r');
+outFd=fs.openSync(wasmExtracted,'w');
+const extract=mod.cwrap('stream7z_extract','number',['number','number','number']);
+assert.equal(extract(2,fs.statSync(direct).size,2),0,lastError());
+fs.closeSync(randomInFd); randomInFd=-1;
+fs.closeSync(outFd); outFd=-1;
+assert.deepEqual(fs.readFileSync(wasmExtracted),data,'Wasm extraction must reproduce exact source bytes');
 
 const reference=path.join(work,'reference.7z');
 const runner=path.join(repoRoot,'prototype/libarchive-streaming/js7z-reference.cjs');
@@ -56,4 +69,4 @@ for(const archive of [direct,reference]){
  const t=childProcess.spawnSync(native7z,['t','-bd','-bso0','-bse0',archive],{encoding:'utf8'});
  assert.equal(t.status,0,t.stderr+'\n'+t.stdout);
 }
-console.log(JSON.stringify({version:'26.03',bytes:d.length,sha256:dh,js7z25Sha256:rh,firstDifference:first,stock7zExtractExact:true}));
+console.log(JSON.stringify({version:'26.03',bytes:d.length,sha256:dh,js7z25Sha256:rh,firstDifference:first,stock7zExtractExact:true,wasmRoundTripExact:true}));
