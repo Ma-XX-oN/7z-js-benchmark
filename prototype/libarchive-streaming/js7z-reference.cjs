@@ -54,7 +54,7 @@ async function runJs7z(instance, args, errors) {
 
   fs.rmSync(path.join(workRoot, archiveRel), { force: true });
   await runJs7z(instance, [
-    'a', '-t7z', '-mx=5', '-m0=lzma2', '-md=32m', '-ms=on', '-mmt=1',
+    'a', '-t7z', '-mx=5', '-m0=lzma2', '-md=32m', '-ms=on', '-mmt=1', '-mtm-', '-mtr-',
     '-bd', '-bso0', '-bse0', '-bsp0', '-y', archiveRel, inputRel,
   ], errors);
 
