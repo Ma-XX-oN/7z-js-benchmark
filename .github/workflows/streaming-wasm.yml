@@ -88,6 +88,9 @@ jobs:
       - name: Verify direct 7-Zip API byte identity
         run: node prototype/7zip-direct/verify.mjs
 
+      - name: Run embedded-Wasm compression/decompression test bench
+        run: node prototype/7zip-direct/testbench.mjs
+
       - name: Build direct libarchive WASM module
         shell: bash
         run: |
