@@ -148,7 +148,12 @@ public:
   CUpdateCallback(int sourceId, const wchar_t *name, UInt64 size,
       bool hasMTime, UInt64 mTime):
     SourceId(sourceId), Name(name), Size(size), HasMTime(hasMTime) {
-    if (HasMTime) MTime.SetAsTimeFrom_FT_Prec(mTime, 0);
+    if (HasMTime) {
+      FILETIME ft;
+      ft.dwLowDateTime = (UInt32)(mTime & 0xffffffffu);
+      ft.dwHighDateTime = (UInt32)(mTime >> 32);
+      MTime.SetAsTimeFrom_FT_Prec(ft, 0);
+    }
   }
 };
 Z7_COM7F_IMF(CUpdateCallback::SetTotal(UInt64)) { return S_OK; }
