@@ -249,7 +249,7 @@ static int stream7z_create_impl(int sourceId, int outputId, const char *memberNa
   CMyComPtr<IOutArchive> archive = handlerSpec;
   const wchar_t *names[] = { L"x", L"0", L"s", L"tm", L"tr" };
   NWindows::NCOM::CPropVariant values[5] = {
-    (UInt32)5, L"LZMA2:d=32m:mt=1", true, hasMTime, false
+    (UInt32)9, L"LZMA2:d=64m:fb=273:mt=1", true, hasMTime, false
   };
   HRESULT hr = S_OK;
   for (unsigned i = 0; i < 5; ++i) {
