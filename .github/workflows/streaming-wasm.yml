@@ -76,7 +76,7 @@ jobs:
         run: |
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            curl xz-utils pkg-config make nodejs npm
+            curl xz-utils pkg-config make nodejs npm p7zip-full
 
       - name: Install benchmark dependencies
         run: npm install --no-audit --no-fund
@@ -89,6 +89,8 @@ jobs:
         run: node prototype/7zip-direct/verify.mjs
 
       - name: Run embedded-Wasm compression/decompression test bench
+        env:
+          SEVEN_ZIP: 7z
         run: node prototype/7zip-direct/testbench.mjs
 
       - name: Build direct libarchive WASM module
