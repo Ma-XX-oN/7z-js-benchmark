@@ -66,6 +66,11 @@ const mod = await createModule({
 });
 
 const create = mod.cwrap('stream7z_create', 'number', ['number', 'number', 'string', 'number']);
+const createMTime = mod.cwrap(
+  'stream7z_create_mtime',
+  'number',
+  ['number', 'number', 'string', 'number', 'number']
+);
 const extract = mod.cwrap('stream7z_extract', 'number', ['number', 'number', 'number']);
 const lastError = mod.cwrap('stream7z_last_error', 'string', []);
 
@@ -85,6 +90,25 @@ assert.equal(extract(2, archive.length, 2), 0, lastError());
 const extractedState = outputs.get(2);
 const extracted = extractedState.bytes.slice(0, extractedState.size);
 assert.deepEqual(extracted, input);
+
+const memberMTimeMs = Date.UTC(2026, 8, 27, 18, 26, 37);
+sources.set(3, { bytes: input, offset: 0 });
+outputs.set(3, { bytes: new Uint8Array(4096), size: 0 });
+assert.equal(
+  createMTime(3, 3, 'timestamped.jsonl', input.length, memberMTimeMs),
+  0,
+  lastError()
+);
+const timestampedState = outputs.get(3);
+const timestampedArchive = timestampedState.bytes.slice(0, timestampedState.size);
+const timestampedPath = fileURLToPath(new URL('.testbench-mtime.7z', here));
+await import('node:fs/promises').then(({ writeFile }) => writeFile(timestampedPath, timestampedArchive));
+const sevenZip = process.env.SEVEN_ZIP ?? '7z';
+const { execFileSync } = await import('node:child_process');
+const listing = execFileSync(sevenZip, ['l', '-slt', timestampedPath], { encoding: 'utf8' });
+assert.match(listing, /Path = timestamped\.jsonl/);
+assert.match(listing, /Modified = 2026-09-27 18:26:37/);
+await import('node:fs/promises').then(({ unlink }) => unlink(timestampedPath));
 
 console.log(JSON.stringify({
   embeddedCompressedWasmBytes: Buffer.from(embeddedCompressedWasmBase64, 'base64').length,
