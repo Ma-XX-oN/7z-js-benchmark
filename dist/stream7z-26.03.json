@@ -1,18 +1,18 @@
 {
   "schema": 1,
   "version": "26.03",
-  "source_commit": "1c520932a8e71842f3a205d44e8d3de25a452ec9",
-  "workflow_run": 36261770081,
+  "source_commit": "d1f62921372df9f750c61a7b76f3564134d1fb35",
+  "workflow_run": 36344768918,
   "files": {
     "stream7z.mjs": {
       "compressed": "stream7z-26.03.mjs.gz",
-      "bytes": 171038,
-      "sha256": "3d6a1fefe081a3af8225b9cbe0768d9612e501fd42987fff154ccd147d5b425f"
+      "bytes": 171379,
+      "sha256": "27740db8704d82d744dc0d0c27479f5c8e69705d2a154ff4473146a44889ad35"
     },
     "stream7z.wasm": {
       "compressed": "stream7z-26.03.wasm.gz",
-      "bytes": 1694869,
-      "sha256": "5adc460e42b71ee919dc4e9794b715164959665aa29aab430b729f16ffd326a2"
+      "bytes": 1695340,
+      "sha256": "8ac623516bbbbd44ce254b78b9a1bdd5696c3e4207e26b685331aeaeee7968ad"
     }
   }
 }
