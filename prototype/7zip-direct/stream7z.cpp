@@ -152,7 +152,7 @@ public:
       FILETIME ft;
       ft.dwLowDateTime = (UInt32)(mTime & 0xffffffffu);
       ft.dwHighDateTime = (UInt32)(mTime >> 32);
-      MTime.SetAsTimeFrom_FT_Prec(ft, 0);
+      MTime.SetAsTimeFrom_FT_Prec(ft, 1);
     }
   }
 };
