@@ -16,7 +16,7 @@ test('published 26.03 browser payload matches its verified manifest', async () =
   const manifest = JSON.parse(await readFile(path.join(root, 'dist/stream7z-26.03.json'), 'utf8'));
   assert.equal(manifest.schema, 1);
   assert.equal(manifest.version, '26.03');
-  assert.equal(manifest.source_commit, '1c520932a8e71842f3a205d44e8d3de25a452ec9');
+  assert.equal(manifest.source_commit, 'd1f62921372df9f750c61a7b76f3564134d1fb35');
   for (const [name, expected] of Object.entries(manifest.files)) {
     const bytes = gunzipSync(await readFile(path.join(root, 'dist', expected.compressed)));
     assert.equal(bytes.length, expected.bytes, name);
@@ -34,10 +34,6 @@ test('fresh direct build reproduces the published browser payload byte for byte'
     return;
   }
   const manifest = JSON.parse(await readFile(path.join(root, 'dist/stream7z-26.03.json'), 'utf8'));
-  if (manifest.source_commit !== process.env.GITHUB_SHA && process.env.GITHUB_ACTIONS === 'true') {
-    t.skip('published payload intentionally trails the current source commit');
-    return;
-  }
   for (const [name, expected] of Object.entries(manifest.files)) {
     const published = gunzipSync(await readFile(path.join(root, 'dist', expected.compressed)));
     const built = await readFile(path.join(build, name));
