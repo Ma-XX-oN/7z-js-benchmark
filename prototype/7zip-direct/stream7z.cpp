@@ -143,8 +143,11 @@ public:
   int SourceId;
   UString Name;
   UInt64 Size;
-  CUpdateCallback(int sourceId, const wchar_t *name, UInt64 size):
-    SourceId(sourceId), Name(name), Size(size) {}
+  bool HasMTime;
+  FILETIME MTime;
+  CUpdateCallback(int sourceId, const wchar_t *name, UInt64 size,
+      bool hasMTime, FILETIME mTime):
+    SourceId(sourceId), Name(name), Size(size), HasMTime(hasMTime), MTime(mTime) {}
 };
 Z7_COM7F_IMF(CUpdateCallback::SetTotal(UInt64)) { return S_OK; }
 Z7_COM7F_IMF(CUpdateCallback::SetCompleted(const UInt64 *)) { return S_OK; }
@@ -162,6 +165,7 @@ Z7_COM7F_IMF(CUpdateCallback::GetProperty(UInt32, PROPID propID, PROPVARIANT *va
     case kpidIsDir: prop = false; break;
     case kpidSize: prop = Size; break;
     case kpidAttrib: prop = (UInt32)0; break;
+    case kpidMTime: if (HasMTime) prop = MTime; break;
     case kpidIsAnti: prop = false; break;
   }
   prop.Detach(value);
@@ -216,8 +220,8 @@ extern "C" {
 EMSCRIPTEN_KEEPALIVE const char *stream7z_last_error() { return g_error; }
 EMSCRIPTEN_KEEPALIVE double stream7z_heap_size() { return js_heap_size(); }
 
-EMSCRIPTEN_KEEPALIVE
-int stream7z_create(int sourceId, int outputId, const char *memberName, double sizeDouble) {
+static int stream7z_create_impl(int sourceId, int outputId, const char *memberName,
+    double sizeDouble, bool hasMTime, double unixTimeMs) {
   g_error[0] = 0;
   if (!memberName || sizeDouble < 0 || sizeDouble > 9007199254740991.0) {
     snprintf(g_error, sizeof(g_error), "invalid arguments");
@@ -249,14 +253,38 @@ int stream7z_create(int sourceId, int outputId, const char *memberName, double s
     }
   }
 
+  FILETIME mTime = {};
+  if (hasMTime) {
+    if (unixTimeMs < -11644473600000.0 || unixTimeMs > 910692730085477.0) {
+      snprintf(g_error, sizeof(g_error), "member modification time is out of range");
+      return -1;
+    }
+    const Int64 ticks = (Int64)(unixTimeMs * 10000.0) + 116444736000000000LL;
+    mTime.dwLowDateTime = (UInt32)((UInt64)ticks & 0xffffffffu);
+    mTime.dwHighDateTime = (UInt32)((UInt64)ticks >> 32);
+  }
+
   CMyComPtr<ISequentialOutStream> out = new CJsOutStream(outputId);
-  CMyComPtr<IArchiveUpdateCallback> callback = new CUpdateCallback(sourceId, name, size);
+  CMyComPtr<IArchiveUpdateCallback> callback =
+      new CUpdateCallback(sourceId, name, size, hasMTime, mTime);
   hr = archive->UpdateItems(out, 1, callback);
   if (hr != S_OK) {
     snprintf(g_error, sizeof(g_error), "UpdateItems failed: 0x%08x", (unsigned)hr);
     return -1;
   }
   return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int stream7z_create(int sourceId, int outputId, const char *memberName, double sizeDouble) {
+  return stream7z_create_impl(sourceId, outputId, memberName, sizeDouble, false, 0);
+}
+
+EMSCRIPTEN_KEEPALIVE
+int stream7z_create_mtime(int sourceId, int outputId, const char *memberName,
+    double sizeDouble, double unixTimeMs) {
+  return stream7z_create_impl(
+      sourceId, outputId, memberName, sizeDouble, true, unixTimeMs);
 }
 
 EMSCRIPTEN_KEEPALIVE
