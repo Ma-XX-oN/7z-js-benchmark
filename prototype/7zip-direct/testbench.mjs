@@ -110,6 +110,36 @@ assert.match(listing, /Path = timestamped\.jsonl/);
 assert.match(listing, /Modified = 2026-09-27 18:26:37/);
 await import('node:fs/promises').then(({ unlink }) => unlink(timestampedPath));
 
+const parityLine = '{"ts":"2026-09-27T17:34:41.530Z","level":"debug","event":"agent-sound-audio-unlock","payload":{"volume":9,"before_state":"running","after_state":"running","resume_attempted":false,"ready":true}}\\n';
+const parityText = parityLine.repeat(Math.ceil((1400 * 1024) / parityLine.length)).slice(0, 1400 * 1024);
+const parityInput = new TextEncoder().encode(parityText);
+sources.set(4, { bytes: parityInput, offset: 0 });
+outputs.set(4, { bytes: new Uint8Array(4096), size: 0 });
+assert.equal(create(4, 4, 'compression-parity.jsonl', parityInput.length), 0, lastError());
+const parityState = outputs.get(4);
+const parityArchive = parityState.bytes.slice(0, parityState.size);
+const parityInputPath = fileURLToPath(new URL('.testbench-parity.jsonl', here));
+const parityNativePath = fileURLToPath(new URL('.testbench-parity-native.7z', here));
+const parityDirectPath = fileURLToPath(new URL('.testbench-parity-direct.7z', here));
+const { writeFile, unlink } = await import('node:fs/promises');
+await writeFile(parityInputPath, parityInput);
+await writeFile(parityDirectPath, parityArchive);
+execFileSync(sevenZip, [
+  'a', '-t7z', '-mx=9', '-m0=lzma2', '-mfb=273', '-md=64m', '-ms=on', '-mmt=1',
+  '-mtm=off', '-mta=off', '-mtc=off', '-bd', '-bso0', '-bse0', '-y',
+  parityNativePath, parityInputPath
+]);
+const nativeParityBytes = (await readFile(parityNativePath)).length;
+assert(
+  parityArchive.length <= nativeParityBytes + 256,
+  `direct archive ${parityArchive.length} exceeds native maximum-profile archive ${nativeParityBytes} by more than container overhead`
+);
+const parityListing = execFileSync(sevenZip, ['l', parityDirectPath], { encoding: 'utf8' });
+assert.match(parityListing, /Method = LZMA2/);
+await Promise.all([
+  unlink(parityInputPath), unlink(parityNativePath), unlink(parityDirectPath)
+]);
+
 console.log(JSON.stringify({
   embeddedCompressedWasmBytes: Buffer.from(embeddedCompressedWasmBase64, 'base64').length,
   wasmBytes: wasmBinary.length,
