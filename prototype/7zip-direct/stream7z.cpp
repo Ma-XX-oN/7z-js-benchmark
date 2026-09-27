@@ -144,9 +144,9 @@ public:
   UString Name;
   UInt64 Size;
   bool HasMTime;
-  FILETIME MTime;
+  UInt64 MTime;
   CUpdateCallback(int sourceId, const wchar_t *name, UInt64 size,
-      bool hasMTime, FILETIME mTime):
+      bool hasMTime, UInt64 mTime):
     SourceId(sourceId), Name(name), Size(size), HasMTime(hasMTime), MTime(mTime) {}
 };
 Z7_COM7F_IMF(CUpdateCallback::SetTotal(UInt64)) { return S_OK; }
@@ -253,15 +253,13 @@ static int stream7z_create_impl(int sourceId, int outputId, const char *memberNa
     }
   }
 
-  FILETIME mTime = {};
+  UInt64 mTime = 0;
   if (hasMTime) {
     if (unixTimeMs < -11644473600000.0 || unixTimeMs > 910692730085477.0) {
       snprintf(g_error, sizeof(g_error), "member modification time is out of range");
       return -1;
     }
-    const Int64 ticks = (Int64)(unixTimeMs * 10000.0) + 116444736000000000LL;
-    mTime.dwLowDateTime = (UInt32)((UInt64)ticks & 0xffffffffu);
-    mTime.dwHighDateTime = (UInt32)((UInt64)ticks >> 32);
+    mTime = (UInt64)((Int64)(unixTimeMs * 10000.0) + 116444736000000000LL);
   }
 
   CMyComPtr<ISequentialOutStream> out = new CJsOutStream(outputId);
