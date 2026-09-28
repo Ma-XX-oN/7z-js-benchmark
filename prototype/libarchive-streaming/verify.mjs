@@ -115,6 +115,13 @@ module = await createStream7z({
     source.position = next;
     return next;
   },
+  stream7zExtractWrite(outputId, view) {
+    const output = outputs.get(outputId);
+    if (!output || !(view instanceof Uint8Array)) return -1;
+    const written = fs.writeSync(output.fd, view, 0, view.byteLength, null);
+    output.bytes += written;
+    return written;
+  },
   stream7zWrite(outputId, view) {
     const output = outputs.get(outputId);
     if (!output || !(view instanceof Uint8Array)) return -1;
@@ -129,6 +136,8 @@ const heapSize = module.cwrap('stream7z_heap_size', 'number', []);
 const readerOpen = module.cwrap('stream7z_reader_open', 'number', ['number']);
 const readerSize = module.cwrap('stream7z_reader_size', 'number', ['number']);
 const readerBytes = module.cwrap('stream7z_reader_bytes_read', 'number', ['number']);
+const readerExtractToJs = module.cwrap(
+  'stream7z_reader_extract_to_js', 'number', ['number', 'number']);
 const readerClose = module.cwrap('stream7z_reader_close', 'number', ['number']);
 const writerBegin = module.cwrap(
   'stream7z_writer_begin', 'number', ['number', 'string', 'number']);
@@ -194,6 +203,24 @@ try {
 }
 
 assert(fs.statSync(outputArchive).size > 0);
+const jsExtractedPath = path.join(workRoot, 'js-extracted.jsonl');
+const jsExtractSourceId = registerSource(outputArchive);
+const jsExtractOutputId = registerOutput(jsExtractedPath);
+try {
+  const jsExtractReader = readerOpen(jsExtractSourceId);
+  assert.notEqual(jsExtractReader, 0, lastError());
+  try {
+    assert.equal(readerExtractToJs(jsExtractReader, jsExtractOutputId), 0, lastError());
+    assert.equal(readerBytes(jsExtractReader), expectedRawBytes);
+  } finally {
+    assert.equal(readerClose(jsExtractReader), 0, lastError());
+  }
+} finally {
+  closeSource(jsExtractSourceId);
+  closeOutput(jsExtractOutputId);
+}
+assert.equal(hashFile(jsExtractedPath), expectedConcatenationHash);
+
 const streamedCompatibility = validateStock7zArchive({
   archivePath: outputArchive,
   memberName: outputMember,
