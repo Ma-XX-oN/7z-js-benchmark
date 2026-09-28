@@ -145,7 +145,17 @@ jobs:
         run: node prototype/libarchive-streaming/benchmark.mjs
 
       - name: Re-run repository tests after build
+        env:
+          STREAMING_DIST_VERIFY: '1'
         run: npm test
+
+      - name: Emit verified streaming gzip for Git-object import
+        shell: bash
+        run: |
+          echo 'STREAMING7Z_MJS_GZ_BASE64_BEGIN'
+          base64 -w0 dist/streaming7z-libarchive.mjs.gz
+          echo
+          echo 'STREAMING7Z_MJS_GZ_BASE64_END'
 
       - name: Upload streaming diagnostics and results
         if: always()
