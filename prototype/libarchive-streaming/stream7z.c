@@ -245,11 +245,12 @@ static la_ssize_t stream7z_write_callback(
   return (la_ssize_t)written;
 }
 
-EMSCRIPTEN_KEEPALIVE
-Stream7zWriter *stream7z_writer_begin(
+static Stream7zWriter *stream7z_writer_begin_impl(
     int output_id,
     const char *member_name,
-    double expected_bytes) {
+    double expected_bytes,
+    int has_mtime,
+    double unix_time_ms) {
   stream7z_error[0] = '\0';
   if (!member_name || expected_bytes < 0 || expected_bytes > 9007199254740991.0) {
     stream7z_set_error("invalid writer_begin arguments");
@@ -307,6 +308,18 @@ Stream7zWriter *stream7z_writer_begin(
   archive_entry_set_size(entry, (la_int64_t)expected_bytes);
   archive_entry_set_filetype(entry, AE_IFREG);
   archive_entry_set_perm(entry, 0644);
+  if (has_mtime) {
+    if (unix_time_ms < 0 || unix_time_ms > 9007199254740991.0) {
+      stream7z_set_error("invalid writer member modification time");
+      archive_entry_free(entry);
+      archive_write_free(writer->archive);
+      free(writer);
+      return NULL;
+    }
+    la_int64_t seconds = (la_int64_t)(unix_time_ms / 1000.0);
+    long nanoseconds = (long)((unix_time_ms - (double)seconds * 1000.0) * 1000000.0);
+    archive_entry_set_mtime(entry, seconds, nanoseconds);
+  }
 
   int header_result = archive_write_header(writer->archive, entry);
   archive_entry_free(entry);
@@ -317,6 +330,26 @@ Stream7zWriter *stream7z_writer_begin(
     return NULL;
   }
   return writer;
+}
+
+
+EMSCRIPTEN_KEEPALIVE
+Stream7zWriter *stream7z_writer_begin(
+    int output_id,
+    const char *member_name,
+    double expected_bytes) {
+  return stream7z_writer_begin_impl(
+      output_id, member_name, expected_bytes, 0, 0.0);
+}
+
+EMSCRIPTEN_KEEPALIVE
+Stream7zWriter *stream7z_writer_begin_mtime(
+    int output_id,
+    const char *member_name,
+    double expected_bytes,
+    double unix_time_ms) {
+  return stream7z_writer_begin_impl(
+      output_id, member_name, expected_bytes, 1, unix_time_ms);
 }
 
 EMSCRIPTEN_KEEPALIVE
