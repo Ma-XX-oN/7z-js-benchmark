@@ -85,8 +85,8 @@ const metadata = {
   settings: {
     format: '7z',
     method: 'LZMA2',
-    level: 5,
-    dictionary: '32 MiB',
+    level: 9,
+    dictionary: '64 MiB',
     solid: true,
     repetitions,
     warmupRuns: 1
@@ -159,7 +159,7 @@ console.log(summaryMarkdown);
 function baseArgs(archiveRel, threadMode, corpusRel) {
   const threading = threadMode === 'single' ? '-mmt=1' : '-mmt=on';
   return [
-    'a', '-t7z', '-mx=5', '-m0=lzma2', '-md=32m', '-ms=on', threading,
+    'a', '-t7z', '-mx=9', '-m0=lzma2', '-md=64m', '-ms=on', threading,
     '-bd', '-bso0', '-bse0', '-bsp0', '-y', archiveRel, corpusRel
   ];
 }
