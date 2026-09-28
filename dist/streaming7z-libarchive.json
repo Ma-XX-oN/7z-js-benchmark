@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "source_commit": "cf05094bab85ef946fc8316227f04f3f6db31058",
+  "files": {
+    "stream7z.mjs": {
+      "compressed": "streaming7z-libarchive.mjs.gz",
+      "bytes": 62615,
+      "sha256": "9790197e13a664f4f14b649172948b42e4689bedecea256d691b47f7b2a15c7d"
+    },
+    "stream7z.wasm": {
+      "compressed": "streaming7z-libarchive.wasm.gz",
+      "bytes": 355397,
+      "sha256": "2da79c1ddec98a9a40875dd5c4bb8b37c27a1b1006221c67bec94071e04b7823"
+    }
+  }
+}
