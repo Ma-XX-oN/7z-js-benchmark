@@ -20,7 +20,7 @@ assert.equal(typeof factory, 'function');
 function compressionArgs(archiveRel) {
   const threading = threadMode === 'single' ? '-mmt=1' : '-mmt=on';
   return [
-    'a', '-t7z', '-mx=5', '-m0=lzma2', '-md=32m', '-ms=on', threading,
+    'a', '-t7z', '-mx=9', '-m0=lzma2', '-md=64m', '-ms=on', threading,
     '-bd', '-bso0', '-bse0', '-bsp0', '-y', archiveRel, corpusRel
   ];
 }
