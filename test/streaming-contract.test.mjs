@@ -116,6 +116,7 @@ test('published streaming distribution is valid gzip with verified raw identity'
   const manifest = JSON.parse(await readFile(new URL('streaming7z-libarchive.json', distRoot), 'utf8'));
   for (const [name, entry] of Object.entries(manifest.files)) {
     const compressed = await readFile(new URL(entry.compressed, distRoot));
+    assert.deepEqual([...compressed.subarray(0, 3)], [0x1f, 0x8b, 0x08], name + ' gzip magic');
     const raw = gunzipSync(compressed);
     assert.equal(raw.length, entry.bytes, name + ' raw byte length');
     assert.equal(createHash('sha256').update(raw).digest('hex'), entry.sha256, name + ' raw sha256');
