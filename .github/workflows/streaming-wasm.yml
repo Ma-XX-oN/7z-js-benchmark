@@ -136,7 +136,7 @@ jobs:
           }
           await writeFile(
             'dist/streaming7z-libarchive.json',
-            JSON.stringify({ schema: 1, source_commit: sourceCommit, files }, null, 2) + '\\n'
+            JSON.stringify({ schema: 1, source_commit: sourceCommit, files }, null, 2) + '\n'
           );
           NODE
 
