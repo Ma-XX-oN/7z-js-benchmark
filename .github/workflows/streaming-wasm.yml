@@ -66,6 +66,8 @@ jobs:
   wasm-streaming:
     needs: contract
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     timeout-minutes: 45
     container:
       image: emscripten/emsdk@sha256:d0be652409a4d3362b8a36c3279dd1123ff1c9327e603d86d9361aa84f1d2e4c
@@ -102,6 +104,48 @@ jobs:
 
       - name: Verify streaming decompress to continuous compress
         run: node prototype/libarchive-streaming/verify.mjs
+
+      - name: Materialize verified streaming browser payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          gzip -9 -n -c prototype/libarchive-streaming/build/stream7z.mjs \
+            > dist/streaming7z-libarchive.mjs.gz
+          gzip -9 -n -c prototype/libarchive-streaming/build/stream7z.wasm \
+            > dist/streaming7z-libarchive.wasm.gz
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFile, writeFile } from 'node:fs/promises';
+          const sourceCommit = process.env.GITHUB_SHA;
+          const files = {};
+          for (const [name, raw, compressed] of [
+            ['stream7z.mjs',
+              'prototype/libarchive-streaming/build/stream7z.mjs',
+              'streaming7z-libarchive.mjs.gz'],
+            ['stream7z.wasm',
+              'prototype/libarchive-streaming/build/stream7z.wasm',
+              'streaming7z-libarchive.wasm.gz']
+          ]) {
+            const bytes = await readFile(raw);
+            files[name] = {
+              compressed,
+              bytes: bytes.length,
+              sha256: createHash('sha256').update(bytes).digest('hex')
+            };
+          }
+          await writeFile(
+            'dist/streaming7z-libarchive.json',
+            JSON.stringify({ schema: 1, source_commit: sourceCommit, files }, null, 2) + '\\n'
+          );
+          NODE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist/streaming7z-libarchive.*
+          if ! git diff --cached --quiet; then
+            git commit -m "build(#3): materialize verified streaming browser payload [skip ci]"
+            git push origin "HEAD:\${GITHUB_REF_NAME}"
+          fi
 
       - name: Benchmark direct WASM against JS7z and native 7z
         run: node prototype/libarchive-streaming/benchmark.mjs
