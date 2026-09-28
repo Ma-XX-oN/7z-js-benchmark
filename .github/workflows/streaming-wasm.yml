@@ -140,3 +140,31 @@ jobs:
           );
           NODE
 
+
+      - name: Benchmark direct WASM against JS7z and native 7z
+        run: node prototype/libarchive-streaming/benchmark.mjs
+
+      - name: Re-run repository tests after build
+        run: npm test
+
+      - name: Upload streaming diagnostics and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: streaming-7z-wasm-results
+          path: |
+            prototype/7zip-direct/build/stream7z.mjs
+            prototype/7zip-direct/build/stream7z.wasm
+            prototype/libarchive-streaming/build.log
+            prototype/libarchive-streaming/build/stream7z.mjs
+            prototype/libarchive-streaming/build/stream7z.wasm
+            dist/streaming7z-libarchive.mjs.gz
+            dist/streaming7z-libarchive.wasm.gz
+            dist/streaming7z-libarchive.json
+            benchmark-results/streaming-wasm-results.json
+            benchmark-results/streaming-performance-results.json
+            .streaming-work/(1).7z
+            .streaming-work/js7z-reference.7z
+            .streaming-work/native-single-input.7z
+            .streaming-work/expected-concatenation.jsonl
+          if-no-files-found: warn
