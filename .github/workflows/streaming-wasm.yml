@@ -105,7 +105,7 @@ jobs:
       - name: Verify streaming decompress to continuous compress
         run: node prototype/libarchive-streaming/verify.mjs
 
-      - name: Materialize verified streaming browser payload
+      - name: Package verified streaming browser payload
         shell: bash
         run: |
           set -euo pipefail
@@ -139,35 +139,4 @@ jobs:
             JSON.stringify({ schema: 1, source_commit: sourceCommit, files }, null, 2) + '\\n'
           );
           NODE
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dist/streaming7z-libarchive.*
-          if ! git diff --cached --quiet; then
-            git commit -m "build(#3): materialize verified streaming browser payload [skip ci]"
-            git push origin "HEAD:\${GITHUB_REF_NAME}"
-          fi
 
-      - name: Benchmark direct WASM against JS7z and native 7z
-        run: node prototype/libarchive-streaming/benchmark.mjs
-
-      - name: Re-run repository tests after build
-        run: npm test
-
-      - name: Upload streaming diagnostics and results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: streaming-7z-wasm-results
-          path: |
-            prototype/7zip-direct/build/stream7z.mjs
-            prototype/7zip-direct/build/stream7z.wasm
-            prototype/libarchive-streaming/build.log
-            prototype/libarchive-streaming/build/stream7z.mjs
-            prototype/libarchive-streaming/build/stream7z.wasm
-            benchmark-results/streaming-wasm-results.json
-            benchmark-results/streaming-performance-results.json
-            .streaming-work/(1).7z
-            .streaming-work/js7z-reference.7z
-            .streaming-work/native-single-input.7z
-            .streaming-work/expected-concatenation.jsonl
-          if-no-files-found: warn
