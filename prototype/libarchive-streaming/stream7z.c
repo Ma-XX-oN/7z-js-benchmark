@@ -48,6 +48,13 @@ EM_JS(int, stream7z_js_write, (int output_id, const unsigned char *data, int len
   return fn(output_id, view) | 0;
 });
 
+EM_JS(int, stream7z_js_extract_write, (int output_id, const unsigned char *data, int length), {
+  const fn = Module['stream7zExtractWrite'];
+  if (typeof fn !== 'function') return -1;
+  const view = HEAPU8.subarray(data, data + length);
+  return fn(output_id, view) | 0;
+});
+
 EM_JS(double, stream7z_js_heap_size, (), {
   return HEAPU8.buffer.byteLength;
 });
@@ -207,6 +214,38 @@ int stream7z_reader_read(Stream7zReader *reader, unsigned char *dest, int capaci
   }
   reader->raw_bytes_read += (double)count;
   return (int)count;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int stream7z_reader_extract_to_js(Stream7zReader *reader, int output_id) {
+  if (!reader) {
+    stream7z_set_error("invalid reader_extract_to_js arguments");
+    return -1;
+  }
+  unsigned char *buffer = (unsigned char *)malloc(STREAM7Z_TRANSFER_BUFFER);
+  if (!buffer) {
+    stream7z_set_error("reader extraction buffer allocation failed");
+    return -1;
+  }
+  int result = 0;
+  for (;;) {
+    la_ssize_t count = archive_read_data(
+        reader->archive, buffer, STREAM7Z_TRANSFER_BUFFER);
+    if (count < 0) {
+      stream7z_set_archive_error("7z member decompression failed", reader->archive);
+      result = -1;
+      break;
+    }
+    if (count == 0) break;
+    if (stream7z_js_extract_write(output_id, buffer, (int)count) != (int)count) {
+      stream7z_set_error("JavaScript extraction write failed");
+      result = -1;
+      break;
+    }
+    reader->raw_bytes_read += (double)count;
+  }
+  free(buffer);
+  return result;
 }
 
 EMSCRIPTEN_KEEPALIVE
