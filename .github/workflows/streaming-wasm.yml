@@ -118,6 +118,8 @@ jobs:
             prototype/7zip-direct/build/stream7z.mjs
             prototype/7zip-direct/build/stream7z.wasm
             prototype/libarchive-streaming/build.log
+            prototype/libarchive-streaming/build/stream7z.mjs
+            prototype/libarchive-streaming/build/stream7z.wasm
             benchmark-results/streaming-wasm-results.json
             benchmark-results/streaming-performance-results.json
             .streaming-work/(1).7z
