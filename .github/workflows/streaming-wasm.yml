@@ -141,6 +141,18 @@ jobs:
           NODE
 
 
+      - name: Emit verified streaming payloads for Git-object import
+        shell: bash
+        run: |
+          echo 'STREAMING7Z_MJS_GZ_BASE64_BEGIN'
+          base64 -w0 dist/streaming7z-libarchive.mjs.gz
+          echo
+          echo 'STREAMING7Z_MJS_GZ_BASE64_END'
+          echo 'STREAMING7Z_WASM_GZ_BASE64_BEGIN'
+          base64 -w0 dist/streaming7z-libarchive.wasm.gz
+          echo
+          echo 'STREAMING7Z_WASM_GZ_BASE64_END'
+
       - name: Benchmark direct WASM against JS7z and native 7z
         run: node prototype/libarchive-streaming/benchmark.mjs
 
