@@ -275,7 +275,7 @@ Stream7zWriter *stream7z_writer_begin(
       archive_write_set_format_option(
           writer->archive, "7zip", "compression", "lzma2") != ARCHIVE_OK ||
       archive_write_set_format_option(
-          writer->archive, "7zip", "compression-level", "5") != ARCHIVE_OK) {
+          writer->archive, "7zip", "compression-level", "9") != ARCHIVE_OK) {
     stream7z_set_archive_error("7z writer configuration failed", writer->archive);
     archive_write_free(writer->archive);
     free(writer);
