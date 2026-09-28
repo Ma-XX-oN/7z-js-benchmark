@@ -122,3 +122,10 @@ test('published streaming distribution is valid gzip with verified raw identity'
     assert.equal(createHash('sha256').update(raw).digest('hex'), entry.sha256, name + ' raw sha256');
   }
 });
+
+
+test('reader exposes decompressed bytes to JavaScript without Module.HEAPU8', async () => {
+  const source = await readPrototypeFile('stream7z.c');
+  assert.match(source, /stream7z_reader_extract_to_js\s*\(/);
+  assert.match(source, /Module\['stream7zExtractWrite'\]/);
+});
