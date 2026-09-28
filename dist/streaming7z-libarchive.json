@@ -1,16 +1,16 @@
 {
   "schema": 1,
-  "source_commit": "0102308fd2176b7976bac45f45900c01e09728b7",
+  "source_commit": "aebc1f7e67ec0a57114568d2b6cb2323e9c9b544",
   "files": {
     "stream7z.mjs": {
       "compressed": "streaming7z-libarchive.mjs.gz",
-      "bytes": 62729,
-      "sha256": "b01fe97ee2590d44e157042fbb39459c303f746b7dc0a752b3edf6fbf4d3e98f"
+      "bytes": 63083,
+      "sha256": "3ad04584d385e3f632fbbc28b35e7b8b68a80563c5b76295d6537aa0365bd161"
     },
     "stream7z.wasm": {
       "compressed": "streaming7z-libarchive.wasm.gz",
-      "bytes": 355681,
-      "sha256": "64f3862d58550856b92bba4af62ea8586d9f2fb3061b98cf0e1805047cb8ba54"
+      "bytes": 356206,
+      "sha256": "c56f9022ccab6f5b67e7bc9b4b50286a869d9a2fcc7472d3e45392f6289662eb"
     }
   }
 }
