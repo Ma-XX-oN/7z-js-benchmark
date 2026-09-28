@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import { gunzipSync } from 'node:zlib';
 import test from 'node:test';
 
 const prototypeRoot = new URL('../prototype/libarchive-streaming/', import.meta.url);
@@ -106,4 +108,16 @@ test('benchmark measures the actual archived-segments plus active-file repack pa
   assert.match(benchmark, /pipeReaderToWriter/);
   assert.match(benchmark, /writerAppendSource/);
   assert.match(benchmark, /archivedSegments/);
+});
+
+
+test('published streaming distribution is valid gzip with verified raw identity', async () => {
+  const distRoot = new URL('../dist/', import.meta.url);
+  const manifest = JSON.parse(await readFile(new URL('streaming7z-libarchive.json', distRoot), 'utf8'));
+  for (const [name, entry] of Object.entries(manifest.files)) {
+    const compressed = await readFile(new URL(entry.compressed, distRoot));
+    const raw = gunzipSync(compressed);
+    assert.equal(raw.length, entry.bytes, name + ' raw byte length');
+    assert.equal(createHash('sha256').update(raw).digest('hex'), entry.sha256, name + ' raw sha256');
+  }
 });
